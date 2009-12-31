@@ -1,0 +1,310 @@
+#!/usr/bin/ruby
+# $Id: mk_html 318 2008-12-30 06:46:47Z beatles $
+#
+# Author:: Daigo Moriwaki
+# Homepage:: http://sourceforge.jp/projects/shogi-server/
+#
+#--
+# Copyright (C) 2006-2008 Daigo Moriwaki <daigo at debian dot org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#++
+#
+# == Synopsis
+#
+# mk_html generates an html page from a players.yaml.
+#
+# == Usage
+#
+# ./mk_html [OPTION] < players.yaml > rating.html
+#
+# [<tt>-h, --help</tt>]
+#    show help
+#
+# [<tt>-w,--wdoor</tt>]
+#    adpot wdoor style
+#
+# [<tt>--footer</tt> <i>filename</i>]
+#    insert contents in the filename at the bottom of a genrated page.
+#
+# == Prerequire
+#
+# * Ruby 1.8.7
+#
+#   $ sudo aptitude install ruby ruby1.8
+#
+# == Example
+#
+#   $ ./mk_html --footer ./wdoor_1000.html < players.yaml > players.html
+#
+#   $ cat ./wdoor-1000.html
+#   <p>The average of the rates in a group is always 1000. 
+#   <p><a href="http://wdoor.c.u-tokyo.ac.jp/shogi/">BACK</a>
+#
+
+require 'optparse'
+require 'yaml'
+require 'erb'
+
+include ERB::Util
+
+def show_date(time)
+  if (Time.now - time < 30*60)
+    return "on line"
+  elsif (Time.now - time < 24*60*60)
+    return time.strftime("%Y-%m-%d")
+    # return "%d hours ago" % [(Time.now - time)/3600]
+  else
+    return time.strftime("%Y-%m-%d")
+  end
+end
+
+def remove_long_to_see_players(file)
+  return unless file["players"][999] # only for Not-Yet-Rated players
+
+  file["players"][999].delete_if do |key, value|
+    value['last_modified'] < Time.now - 24*3600*30 # 30 days
+  end
+end
+
+def main
+  $wdoor = false
+  $footer_content = nil
+  opts = OptionParser.new
+  opts.banner = "Usage: mk_html [OPTIONS]"
+  opts.on("--footer filename", String, "Insert contents of the filename at the bottom of a genrated page") do |filename|
+    unless File.exist?(filename)
+      $stderr.puts "File not found: %s" % [filename]
+      raise
+    end
+    $footer_content = File.open(filename).read
+  end
+  opts.on("-w","--wdoor", "adopt a wdoor style") { $wdoor=true }
+  opts.on_tail("-h", "--help", "show this message") do
+    puts opts
+    exit
+  end
+  begin
+    opts.parse(ARGV) 
+  rescue
+    puts opts
+    exit -1
+  end
+
+  lines = ""
+  while l = $stdin.gets do
+    lines << l
+  end
+  file = YAML::load(lines)
+  erb = ERB.new( DATA.read, nil, "%>" )
+  tables = []
+  group_names = []
+  file["players"].keys.sort.each do |index|
+    if index < 999
+      group_names << "#{index}"
+    else
+      group_names << "Not-Yet-Rated Players"
+    end
+  end
+  remove_long_to_see_players(file)
+
+  popup_id = 0
+
+  if $wdoor
+    yss_rate = 0
+    file["players"].keys.each do |group_index|
+      file["players"][group_index].each do |player, yaml|
+        if player == "YSS+707d4f98d9d2620cdaab58f19d02a2e4"
+          yss_rate = yaml['rate']
+        end
+      end
+    end
+  end
+        
+  file["players"].sort.each do |key, yaml| # sort groups in the order written in players.yaml
+  sorted_keys = yaml.keys.sort do |a,b| 
+    # sort players in a group by one's rate
+    if yaml[b]['rate'] == 0 && yaml[a]['rate'] == 0
+      # mainly for not-rated-yet players
+      yaml[b]['last_modified'] <=> yaml[a]['last_modified']
+    else
+      yaml[b]['rate'] <=> yaml[a]['rate']
+    end
+  end 
+  top_rate = nil  
+  table = ERB.new(<<ENDTABLE, nil, "%>")
+% sorted_keys.each do |key|
+  <%
+    win  = yaml[key]['win']
+    loss = yaml[key]['loss']
+    win_rate = win.to_f / (win + loss)
+    last_modified = yaml[key]['last_modified']
+    
+    player_decoration = "default"
+
+    case (Time.now - last_modified)/60 # minutes
+    when (0..30)        then player_decoration = "current"
+    when (0..(1*60*24)) then player_decoration = "today"
+    when (0..(7*60*24)) then player_decoration = "this_week"
+    end
+    
+    case key
+    when "yowai_gps+95908f6c18338f5340371f71523fc5e3" then player_decoration = "yowai_gps"
+    when "gps+11648e4e66e7ed6a86cb7f1d0cf604fe"       then player_decoration = "gps"
+    end
+
+    rate = yaml[key]['rate']
+    top_rate ||= rate
+    diff_rate = rate - top_rate
+    diff_possibility = 1.0/(1.0 + 10**(-diff_rate/400.0))
+  %>
+  <tr class="<%=player_decoration%>">
+    <td class="name">
+        <a id="popup<%=popup_id+=1%>" href="http://wdoor.c.u-tokyo.ac.jp/shogi/tools/view/show-player.cgi?event=LATEST&amp;filter=floodgate&amp;show_self_play=1&amp;user=<%=u key%>"><%= h yaml[key]['name'] %></a>
+        <script type="text/javascript">
+          var tooltip<%=popup_id%> = new YAHOO.widget.Tooltip("myTooltip", {
+            context:"popup<%=popup_id%>",
+            text:"<%= h key %>" } );
+        </script>
+    </td>
+    <td class="rate">
+        <span id="popup<%=popup_id+=1%>"><%= rate != 0 ? "%5d"  % [ rate ] : "N/A" %></span>
+        <script type="text/javascript">
+          var tooltip<%=popup_id%> = new YAHOO.widget.Tooltip("myTooltip", {
+            context:"popup<%=popup_id%>",
+            text:"Behind <%= "%5d" % [ diff_rate ] %> (<%= "%.3f" % [ diff_possibility ] %>)" } );
+        </script>
+    </td>
+    <td class="ngames">
+        <%= "%5d"  % [ win ] %>  </td>
+    <td class="ngames">
+        <%= "%5d"  % [ loss ] %> </td>
+    <td class="win_rate">
+        <%= "%.3f" % [win_rate] %> </td>
+    <td class="last_modified">
+        <%= show_date(last_modified) %> </td>
+% if $wdoor
+    <td class="rate">
+        <%= rate != 0 && yss_rate > 0 ? ("%5d"  % [2300 - yss_rate + rate]) : "N/A" %> </td>
+% end
+  </tr>
+% end
+ENDTABLE
+        
+    tables << table.result(binding)
+  end
+
+  body = erb.result(binding)
+  puts body
+end
+
+if __FILE__ == $0
+  main
+end
+
+# vim: ts=2 sw=2 sts=0
+
+__END__
+<html>
+<head>
+  <title>Shogi Server Rating</title>
+  <link rel="StyleSheet" type="text/css" href="http://wdoor.c.u-tokyo.ac.jp/shogi/shogi.css">
+  <!-- CSS --> 
+  <!-- License: http://developer.yahoo.com/yui/license.html -->
+  <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.4.1/build/reset-fonts-grids/reset-fonts-grids.css"> 
+  <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.4.1/build/base/base-min.css"> 
+  <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.4.1/build/container/assets/container.css"> 
+  <!-- Dependencies --> 
+  <script type="text/javascript" src="http://yui.yahooapis.com/2.4.1/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
+  <!-- OPTIONAL: Animation (only required if enabling Animation) --> 
+  <script type="text/javascript" src="http://yui.yahooapis.com/2.4.1/build/animation/animation-min.js"></script> 
+  <!-- Source file --> 
+  <script type="text/javascript" src="http://yui.yahooapis.com/2.4.1/build/container/container-min.js"></script>
+  <style type="text/css"><!--
+    TABLE {margin-left: auto;
+           margin-right: auto;}
+    CAPTION { caption-side: left;}
+    .name {text-align: center;
+           width: 180px;}
+    .rate, .ngames, .win_rate {text-align: right;}
+    .last_modified {text-align: center;}
+    .gps, .yowai_gps {background-color: lightgreen;}
+    .current   {background-color: #FFD700;}
+    .today     {background-color: #FFFF00;}
+    .this_week {background-color: #FFFFAA;}
+
+    #bd {text-align: center;}
+    #ft {text-align: right;}
+  --></style>
+</head>
+<body><div id="doc">
+
+<div id="hd"></div>
+
+<div id="bd">
+<h1>Shogi Server Rating</h1>
+
+% tables.each_with_index do |t, index|
+<table>
+<caption>Group: <%=group_names[index]%></caption>
+<colgroup>
+  <col class="name">
+  <col class="rate">
+  <col class="ngames">
+  <col class="ngames">
+  <col class="win_rate">
+  <col class="last_modified">
+% if $wdoor
+  <col class="rate)">
+% end
+</colgroup>
+<thead>
+<tr>
+  <th>name</th>
+  <th>rate</th> 
+  <th>win</th> 
+  <th>loss</th> 
+  <th>&#37;</th> 
+  <th>last_modified</th>
+% if $wdoor
+  <th>(rate24)</th> 
+% end
+</tr>
+</thead>
+<tbody>
+  <%= t %>
+</tbody>
+</table>
+
+<hr style="width:50%; margin:1em auto;">
+
+% end
+
+<p>Groups are independently rated. You can not compare rates across them.
+
+<%= $footer_content %>
+
+<hr/>
+</div>
+
+
+<div id="ft">
+  <p>Last modified at <%=Time.now%>
+  <p>$Revision: 318 $
+</div>
+
+</div></body>
+</html>
+

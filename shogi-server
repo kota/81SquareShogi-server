@@ -1,0 +1,444 @@
+#! /usr/bin/env ruby
+# $Id: shogi-server 372 2009-12-27 04:26:46Z beatles $
+#
+# Author:: NABEYA Kenichi, Daigo Moriwaki
+# Homepage:: http://sourceforge.jp/projects/shogi-server/
+#
+#--
+# Copyright (C) 2004 NABEYA Kenichi (aka nanami@2ch)
+# Copyright (C) 2007-2008 Daigo Moriwaki (daigo at debian dot org)
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#++
+#
+#
+
+$topdir = nil
+$league = nil
+$logger = nil
+$config = nil
+$:.unshift File.dirname(__FILE__)
+require 'shogi_server'
+require 'shogi_server/config'
+require 'shogi_server/util'
+require 'tempfile'
+
+#################################################
+# MAIN
+#
+
+ShogiServer.reload
+
+def gets_safe(socket, timeout=nil)
+  if r = select([socket], nil, nil, timeout)
+    return r[0].first.gets
+  else
+    return :timeout
+  end
+rescue Exception => ex
+  log_error("gets_safe: #{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}")
+  return :exception
+end
+
+def usage
+    print <<EOM
+NAME
+	shogi-server - server for CSA server protocol
+
+SYNOPSIS
+	shogi-server [OPTIONS] event_name port_number
+
+DESCRIPTION
+	server for CSA server protocol
+
+OPTIONS
+	--pid-file file
+		specify filename for logging process ID
+        --daemon dir
+                run as a daemon. Log files will be put in dir.
+        --player-log-dir dir
+                log network messages for each player. Log files
+                will be put in the dir.
+
+LICENSE
+	GPL versoin 2 or later
+
+SEE ALSO
+
+RELEASE
+	#{ShogiServer::Release}
+
+REVISION
+	#{ShogiServer::Revision}
+
+EOM
+end
+
+
+def log_debug(str)
+  $logger.debug(str)
+end
+
+def log_message(str)
+  $logger.info(str)
+end
+def log_info(str)
+  log_message(str)
+end
+
+def log_warning(str)
+  $logger.warn(str)
+end
+
+def log_error(str)
+  $logger.error(str)
+end
+
+
+# Parse command line options. Return a hash containing the option strings
+# where a key is the option name without the first two slashes. For example,
+# {"pid-file" => "foo.pid"}.
+#
+def parse_command_line
+  options = Hash::new
+  parser = GetoptLong.new(
+    ["--daemon",            GetoptLong::REQUIRED_ARGUMENT],
+    ["--pid-file",          GetoptLong::REQUIRED_ARGUMENT],
+    ["--player-log-dir",    GetoptLong::REQUIRED_ARGUMENT])
+  parser.quiet = true
+  begin
+    parser.each_option do |name, arg|
+      name.sub!(/^--/, '')
+      options[name] = arg.dup
+    end
+  rescue
+    usage
+    raise parser.error_message
+  end
+  return options
+end
+
+# Check command line options.
+# If any of them is invalid, exit the process.
+#
+def check_command_line
+  if (ARGV.length != 2)
+    usage
+    exit 2
+  end
+
+  if $options["daemon"]
+    $options["daemon"] = File.expand_path($options["daemon"], File.dirname(__FILE__))
+    unless is_writable_dir? $options["daemon"]
+      usage
+      $stderr.puts "Can not create a file in the daemon directory: %s" % [$options["daemon"]]
+      exit 5
+    end
+  end
+
+  $topdir = $options["daemon"] || File.expand_path(File.dirname(__FILE__))
+
+  if $options["player-log-dir"]
+    $options["player-log-dir"] = File.expand_path($options["player-log-dir"], $topdir)
+    unless is_writable_dir?($options["player-log-dir"])
+      usage
+      $stderr.puts "Can not write a file in the player log dir: %s" % [$options["player-log-dir"]]
+      exit 3
+    end 
+  end
+
+  if $options["pid-file"] 
+    $options["pid-file"] = File.expand_path($options["pid-file"], $topdir)
+    unless ShogiServer::is_writable_file? $options["pid-file"]
+      usage
+      $stderr.puts "Can not create the pid file: %s" % [$options["pid-file"]]
+      exit 4
+    end
+  end
+
+  if $options["floodgate-history"]
+    $stderr.puts "WARNING: --floodgate-history has been deprecated."
+    $options["floodgate-history"] = nil
+  end
+end
+
+# See if a file can be created in the directory.
+# Return true if a file is writable in the directory, otherwise false.
+#
+def is_writable_dir?(dir)
+  unless File.directory? dir
+    return false
+  end
+
+  result = true
+
+  begin
+    temp_file = Tempfile.new("dummy-shogi-server", dir)
+    temp_file.close true
+  rescue
+    result = false
+  end
+
+  return result
+end
+
+def write_pid_file(file)
+  open(file, "w") do |fh|
+    fh.puts "#{$$}"
+  end
+end
+
+def mutex_watchdog(mutex, sec)
+  sec = 1 if sec < 1
+  queue = []
+  while true
+    if mutex.try_lock
+      queue.clear
+      mutex.unlock
+    else
+      queue.push(Object.new)
+      if queue.size > sec
+        # timeout
+        log_error("mutex watchdog timeout: %d sec" % [sec])
+        queue.clear
+      end
+    end
+    sleep(1)
+  end
+end
+
+def login_loop(client)
+  player = login = nil
+ 
+  while r = select([client], nil, nil, ShogiServer::Login_Time) do
+    str = nil
+    begin
+      break unless str = r[0].first.gets
+    rescue Exception => ex
+      # It is posssible that the socket causes an error (ex. Errno::ECONNRESET)
+      log_error("login_loop: #{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}")
+      break
+    end
+    $mutex.lock # guards $league
+    begin
+      str =~ /([\r\n]*)$/
+      eol = $1
+      if (ShogiServer::Login::good_login?(str))
+        player = ShogiServer::Player::new(str, client, eol)
+        login  = ShogiServer::Login::factory(str, player)
+        if (current_player = $league.find(player.name))
+          if (current_player.password == player.password &&
+              current_player.status != "game")
+            log_message(sprintf("user %s login forcely", player.name))
+            current_player.kill
+          else
+            login.incorrect_duplicated_player(str)
+            player = nil
+            break
+          end
+        end
+        $league.add(player)
+        break
+      else
+        client.write("LOGIN:incorrect" + eol)
+        client.write("type 'LOGIN name password' or 'LOGIN name password x1'" + eol) if (str.split.length >= 4)
+      end
+    ensure
+      $mutex.unlock
+    end
+  end                       # login loop
+  return [player, login]
+end
+
+def setup_logger(log_file)
+  logger = ShogiServer::Logger.new(log_file, 'daily')
+  logger.formatter = ShogiServer::Formatter.new
+  logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO  
+  logger.datetime_format = "%Y-%m-%d %H:%M:%S"
+  return logger
+end
+
+def setup_watchdog_for_giant_lock
+  $mutex = Mutex::new
+  Thread::start do
+    Thread.pass
+    mutex_watchdog($mutex, 10)
+  end
+end
+
+def floodgate_reload_log(leagues)
+  floodgate = leagues.min {|a,b| a.next_time <=> b.next_time}
+  diff = floodgate.next_time - Time.now
+  log_message("Floodgate reloaded. The next match will start at %s in %d seconds" % 
+              [floodgate.next_time, diff])
+end
+
+def setup_floodgate(game_names)
+  return Thread.start(game_names) do |game_names|
+    Thread.pass
+    leagues = game_names.collect do |game_name|
+      ShogiServer::League::Floodgate.new($league, 
+                                         {:game_name => game_name})
+    end
+    leagues.delete_if do |floodgate|
+      ret = false
+      unless floodgate.next_time 
+        log_error("Unsupported game name: %s" % floodgate.game_name)
+        ret = true
+      end
+      ret
+    end
+    if leagues.empty?
+      log_error("No valid Floodgate game names found")
+      return # exit from this thread
+    end
+    floodgate_reload_log(leagues)
+
+    while (true)
+      begin
+        floodgate = leagues.min {|a,b| a.next_time <=> b.next_time}
+        diff = floodgate.next_time - Time.now
+        if diff > 0
+          floodgate_reload_log(leagues) if $DEBUG
+          sleep(diff/2)
+          next
+        end
+        next_array = leagues.collect do |floodgate|
+          if (floodgate.next_time - Time.now) > 0
+            [floodgate.game_name, floodgate.next_time]
+          else
+            log_message("Starting Floodgate games...: %s" % [floodgate.game_name])
+            $league.reload
+            floodgate.match_game
+            floodgate.charge
+            [floodgate.game_name, floodgate.next_time] # next_time has been updated
+          end
+        end
+        $mutex.synchronize do
+          log_message("Reloading source...")
+          ShogiServer.reload
+        end
+        # Regenerate floodgate instances after ShogiServer.realod
+        leagues = next_array.collect do |game_name, next_time|
+          floodgate = ShogiServer::League::Floodgate.new($league, 
+                                                         {:game_name => game_name,
+                                                          :next_time => next_time})
+        end
+        floodgate_reload_log(leagues)
+      rescue Exception => ex 
+        # ignore errors
+        log_error("[in Floodgate's thread] #{ex} #{ex.backtrace}")
+      end
+    end
+  end
+end
+
+def main
+  
+  $options = parse_command_line
+  check_command_line
+  $config = ShogiServer::Config.new $options
+
+  $league = ShogiServer::League.new($topdir)
+
+  $league.event = ARGV.shift
+  port = ARGV.shift
+
+  log_file = $options["daemon"] ? File.join($options["daemon"], "shogi-server.log") : STDOUT
+  $logger = setup_logger(log_file)
+
+  $league.dir = $topdir
+
+  config = {}
+  config[:Port]       = port
+  config[:ServerType] = WEBrick::Daemon if $options["daemon"]
+  config[:Logger]     = $logger
+
+  fg_thread = nil
+
+  config[:StartCallback] = Proc.new do
+    srand
+    if $options["pid-file"]
+      write_pid_file($options["pid-file"])
+    end
+    setup_watchdog_for_giant_lock
+    $league.setup_players_database
+    fg_thread = setup_floodgate(["floodgate-900-0", "floodgate-3600-0"])
+  end
+
+  config[:StopCallback] = Proc.new do
+    if $options["pid-file"]
+      FileUtils.rm($options["pid-file"], :force => true)
+    end
+  end
+
+  srand
+  server = WEBrick::GenericServer.new(config)
+  ["INT", "TERM"].each do |signal| 
+    trap(signal) do
+      server.shutdown
+      fg_thread.kill if fg_thread
+    end
+  end
+  unless (RUBY_PLATFORM.downcase =~ /mswin|mingw|cygwin|bccwin/)
+    trap("HUP") do
+      Dependencies.clear
+    end
+  end
+  $stderr.puts("server started as a deamon [Revision: #{ShogiServer::Revision}]") if $options["daemon"] 
+  log_message("server started [Revision: #{ShogiServer::Revision}]")
+
+  server.start do |client|
+      # client.sync = true # this is already set in WEBrick 
+      client.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
+        # Keepalive time can be set by /proc/sys/net/ipv4/tcp_keepalive_time
+      player, login = login_loop(client) # loop
+      next unless player
+
+      log_message(sprintf("user %s login", player.name))
+      login.process
+      player.setup_logger($options["player-log-dir"]) if $options["player-log-dir"]
+      player.run(login.csa_1st_str) # loop
+      $mutex.lock
+      begin
+        if (player.game)
+          player.game.kill(player)
+        end
+        player.finish # socket has been closed
+        $league.delete(player)
+        log_message(sprintf("user %s logout", player.name))
+      ensure
+        $mutex.unlock
+      end
+  end
+end
+
+
+if ($0 == __FILE__)
+  STDOUT.sync = true
+  STDERR.sync = true
+  TCPSocket.do_not_reverse_lookup = true
+  Thread.abort_on_exception = $DEBUG ? true : false
+
+  begin
+    main
+  rescue Exception => ex
+    if $logger
+      log_error("main: #{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}")
+    else
+      $stderr.puts "main: #{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}"
+    end
+  end
+end
