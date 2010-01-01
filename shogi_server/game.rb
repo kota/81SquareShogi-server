@@ -193,7 +193,7 @@ class Game
     if ((@current_player.mytime - t <= -@byoyomi) && 
         ((@total_time > 0) || (@byoyomi > 0)))
       status = :timeout
-    elsif (str == :timeout)
+    elsif (str == :timeout or str == '%%%TIMEOUT' )
       return false            # time isn't expired. players aren't swapped. continue game
     else
       @current_player.mytime -= t
