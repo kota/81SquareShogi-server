@@ -18,11 +18,16 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/command'
+require 'rubygems'
+require 'active_record'
 
 module ShogiServer # for a namespace
 
-class BasicPlayer
+class BasicPlayer < ActiveRecord::Base
+  set_table_name 'players'  
+
   def initialize
+    super()
     @player_id = nil
     @name = nil
     @password = nil
@@ -118,8 +123,12 @@ end
 
 class Player < BasicPlayer
   WRITE_THREAD_WATCH_INTERVAL = 20 # sec
-  def initialize(str, socket, eol=nil)
+  def initialize(str=nil, socket=nil, eol=nil)
     super()
+    init(str,socket,eol)
+  end
+
+  def init(str=nil,socket=nil,eol=nil)
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
 
@@ -296,6 +305,27 @@ class Player < BasicPlayer
       end
     end # enf of while
   end # def run
+
+  def self.password_digest(password, salt)
+    digest = REST_AUTH_SITE_KEY
+    REST_AUTH_DIGEST_STRETCHES.times do
+      digest = self.secure_digest(digest, salt, password, REST_AUTH_SITE_KEY)
+    end
+    digest
+  end
+
+  def self.secure_digest(*args)
+      Digest::SHA1.hexdigest(args.flatten.join('--'))
+  end
+
+  def encrypt(password)
+    self.class.password_digest(password, salt)
+  end
+
+  def authenticated?(password)
+    crypted_password == encrypt(password)
+  end
+
 end # class
 
 end # ShogiServer

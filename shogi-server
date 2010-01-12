@@ -35,6 +35,9 @@ require 'shogi_server/config'
 require 'shogi_server/util'
 require 'tempfile'
 
+require 'rubygems'
+require 'active_record'
+
 #################################################
 # MAIN
 #
@@ -236,21 +239,34 @@ def login_loop(client)
       str =~ /([\r\n]*)$/
       eol = $1
       if (ShogiServer::Login::good_login?(str))
-        player = ShogiServer::Player::new(str, client, eol)
-        login  = ShogiServer::Login::factory(str, player)
-        if (current_player = $league.find(player.name))
-          if (current_player.password == player.password &&
-              current_player.status != "game")
-            log_message(sprintf("user %s login forcely", player.name))
-            current_player.kill
-          else
-            login.incorrect_duplicated_player(str)
-            player = nil
+        if player = ShogiServer::Player.find(:first,:conditions => ['login = ?',str.split[1]])
+          player.init(str,client,eol)
+          #player.socket = client
+          #player.eol = eol || "\m"
+          #player = ShogiServer::Player::new(str, client, eol)
+          login  = ShogiServer::Login::factory(str, player)
+          log_message(sprintf("PASSWORD = %s", player.password))
+          if player.authenticated?(player.password)
+            if (current_player = $league.find(player.name))
+              if (current_player.password == player.password &&
+                  current_player.status != "game")
+                log_message(sprintf("user %s login forcely", player.name))
+                current_player.kill
+              else
+                login.incorrect_duplicated_player(str)
+                player = nil
+                break
+              end
+            end
+            $league.add(player)
             break
+          else
+            player = nil
+            client.write("LOGIN:incorrect password" + eol)
           end
+        else
+          client.write("LOGIN:incorrect login" + eol)
         end
-        $league.add(player)
-        break
       else
         client.write("LOGIN:incorrect" + eol)
         client.write("type 'LOGIN name password' or 'LOGIN name password x1'" + eol) if (str.split.length >= 4)
@@ -427,10 +443,20 @@ end
 
 
 if ($0 == __FILE__)
+  #for password digest
+  REST_AUTH_SITE_KEY         = 'SOME_AUTH_KEY'
+  REST_AUTH_DIGEST_STRETCHES = 10
+
   STDOUT.sync = true
   STDERR.sync = true
   TCPSocket.do_not_reverse_lookup = true
   Thread.abort_on_exception = $DEBUG ? true : false
+
+  ActiveRecord::Base.establish_connection(
+    :adapter  => "mysql",
+    :database => "database_name",
+    :username => "user_name"
+  )
 
   begin
     main
