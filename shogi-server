@@ -241,9 +241,6 @@ def login_loop(client)
       if (ShogiServer::Login::good_login?(str))
         if player = ShogiServer::Player.find(:first,:conditions => ['login = ?',str.split[1]])
           player.init(str,client,eol)
-          #player.socket = client
-          #player.eol = eol || "\m"
-          #player = ShogiServer::Player::new(str, client, eol)
           login  = ShogiServer::Login::factory(str, player)
           log_message(sprintf("PASSWORD = %s", player.password))
           if player.authenticated?(player.password)
@@ -444,7 +441,7 @@ end
 
 if ($0 == __FILE__)
   #for password digest
-  REST_AUTH_SITE_KEY         = 'SOME_AUTH_KEY'
+  REST_AUTH_SITE_KEY         = '070d045a424730a7ffacaff2b85d061749cf1d47'
   REST_AUTH_DIGEST_STRETCHES = 10
 
   STDOUT.sync = true
@@ -454,8 +451,10 @@ if ($0 == __FILE__)
 
   ActiveRecord::Base.establish_connection(
     :adapter  => "mysql",
-    :database => "database_name",
-    :username => "user_name"
+    :database => "81squareuniverse_dev",
+    :username => "root",
+    :socket => "/opt/local/var/run/mysql5/mysqld.sock",
+    :encoding => "utf8"
   )
 
   begin
