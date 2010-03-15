@@ -32,7 +32,7 @@ module ShogiServer
         cmd = KeepAliveCommand.new(str, player)
       when /^[\+\-][^%]/
         cmd = MoveCommand.new(str, player)
-      when /^%[^%]/, :timeout
+      when /^%[^%]/, :timeout, /^%%%TIMEOUT/
         cmd = SpecialCommand.new(str, player)
       when :exception
         cmd = ExceptionCommand.new(str, player)

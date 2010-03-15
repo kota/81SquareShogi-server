@@ -154,6 +154,10 @@ class Game
     @fh.printf("'$END_TIME:%s\n", end_time.strftime("%Y/%m/%d %H:%M:%S"))    
     @fh.close
 
+    if @result
+      @result.winner.update_rate(@result.loser)
+    end
+
     @sente.game = nil
     @gote.game = nil
     @sente.status = "connected"
@@ -193,7 +197,7 @@ class Game
     if ((@current_player.mytime - t <= -@byoyomi) && 
         ((@total_time > 0) || (@byoyomi > 0)))
       status = :timeout
-    elsif (str == :timeout)
+    elsif (str == :timeout or str == '%%%TIMEOUT' )
       return false            # time isn't expired. players aren't swapped. continue game
     else
       @current_player.mytime -= t

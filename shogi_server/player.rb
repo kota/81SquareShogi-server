@@ -18,33 +18,19 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/command'
+require 'rubygems'
+require 'active_resource'
 
 module ShogiServer # for a namespace
 
-class BasicPlayer
-  def initialize
-    @player_id = nil
-    @name = nil
-    @password = nil
-    @rate = 0
-    @win  = 0
-    @loss = 0
-    @last_game_win = false
-    @sente = nil
-    @game_name = ""
-  end
+class BasicPlayer < ActiveResource::Base
+  self.site = 'http://localhost:3000'
 
   # Idetifier of the player in the rating system
   attr_accessor :player_id
 
-  # Name of the player
-  attr_accessor :name
-  
   # Password of the player, which does not include a trip
   attr_accessor :password
-
-  # Score in the rating sysem
-  attr_accessor :rate
 
   # Number of games for win and loss in the rating system
   attr_accessor :win, :loss
@@ -79,8 +65,8 @@ class BasicPlayer
   end
 
   def rate=(new_rate)
-    if @rate != new_rate
-      @rate = new_rate
+    if self.rate != new_rate
+      @attributes['rate'] = new_rate
       @modified_at = Time.now
     end
   end
@@ -118,8 +104,15 @@ end
 
 class Player < BasicPlayer
   WRITE_THREAD_WATCH_INTERVAL = 20 # sec
-  def initialize(str, socket, eol=nil)
-    super()
+
+  def init(str=nil,socket=nil,eol=nil)
+    @player_id = nil
+    @win  = 0
+    @loss = 0
+    @last_game_win = false
+    @sente = nil
+    @game_name = ""
+
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
 
@@ -131,8 +124,10 @@ class Player < BasicPlayer
     @main_thread = Thread::current
     @write_queue = ShogiServer::TimeoutQueue.new(WRITE_THREAD_WATCH_INTERVAL)
     @player_logger = nil
+    @name = name
     start_write_thread
   end
+
 
   attr_accessor :socket, :status
   attr_accessor :protocol, :eol, :game, :mytime
@@ -301,6 +296,28 @@ class Player < BasicPlayer
       end
     end # enf of while
   end # def run
+
+  #For restful authentication.
+  def self.password_digest(password, salt)
+    digest = REST_AUTH_SITE_KEY
+    REST_AUTH_DIGEST_STRETCHES.times do
+      digest = self.secure_digest(digest, salt, password, REST_AUTH_SITE_KEY)
+    end
+    digest
+  end
+
+  def self.secure_digest(*args)
+      Digest::SHA1.hexdigest(args.flatten.join('--'))
+  end
+
+  def encrypt(password)
+    self.class.password_digest(password, salt)
+  end
+
+  def authenticated?(password)
+    crypted_password == encrypt(password)
+  end
+
 end # class
 
 end # ShogiServer
