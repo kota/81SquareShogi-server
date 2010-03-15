@@ -19,19 +19,53 @@
 
 require 'shogi_server/command'
 require 'rubygems'
+<<<<<<< HEAD:shogi_server/player.rb
 require 'active_resource'
 
 module ShogiServer # for a namespace
 
 class BasicPlayer < ActiveResource::Base
   self.site = 'http://localhost:3000'
+=======
+require 'active_record'
+
+module ShogiServer # for a namespace
+
+class BasicPlayer < ActiveRecord::Base
+  set_table_name 'players'  
+
+  def initialize
+    super()
+    @player_id = nil
+    @name = nil
+    @password = nil
+    @rate = 0
+    @win  = 0
+    @loss = 0
+    @last_game_win = false
+    @sente = nil
+    @game_name = ""
+  end
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
 
   # Idetifier of the player in the rating system
   attr_accessor :player_id
 
+<<<<<<< HEAD:shogi_server/player.rb
   # Password of the player, which does not include a trip
   attr_accessor :password
 
+=======
+  # Name of the player
+  attr_accessor :name
+  
+  # Password of the player, which does not include a trip
+  attr_accessor :password
+
+  # Score in the rating sysem
+  attr_accessor :rate
+
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
   # Number of games for win and loss in the rating system
   attr_accessor :win, :loss
   
@@ -65,8 +99,13 @@ class BasicPlayer < ActiveResource::Base
   end
 
   def rate=(new_rate)
+<<<<<<< HEAD:shogi_server/player.rb
     if self.rate != new_rate
       @attributes['rate'] = new_rate
+=======
+    if @rate != new_rate
+      @rate = new_rate
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
       @modified_at = Time.now
     end
   end
@@ -104,6 +143,7 @@ end
 
 class Player < BasicPlayer
   WRITE_THREAD_WATCH_INTERVAL = 20 # sec
+<<<<<<< HEAD:shogi_server/player.rb
 
   def init(str=nil,socket=nil,eol=nil)
     @player_id = nil
@@ -113,6 +153,14 @@ class Player < BasicPlayer
     @sente = nil
     @game_name = ""
 
+=======
+  def initialize(str=nil, socket=nil, eol=nil)
+    super()
+    init(str,socket,eol)
+  end
+
+  def init(str=nil,socket=nil,eol=nil)
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
 
@@ -124,11 +172,17 @@ class Player < BasicPlayer
     @main_thread = Thread::current
     @write_queue = ShogiServer::TimeoutQueue.new(WRITE_THREAD_WATCH_INTERVAL)
     @player_logger = nil
+<<<<<<< HEAD:shogi_server/player.rb
     @name = name
     start_write_thread
   end
 
 
+=======
+    start_write_thread
+  end
+
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
   attr_accessor :socket, :status
   attr_accessor :protocol, :eol, :game, :mytime
   attr_accessor :main_thread
@@ -253,7 +307,10 @@ class Player < BasicPlayer
   def run(csa_1st_str=nil)
     while ( csa_1st_str || 
             str = gets_safe(@socket, (@socket_buffer.empty? ? Default_Timeout : 1)) )
+<<<<<<< HEAD:shogi_server/player.rb
       time = Time.now
+=======
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
       log(:info, :in, str) if str && str.instance_of?(String) 
       $mutex.lock
       begin
@@ -277,11 +334,15 @@ class Player < BasicPlayer
         end
         str.chomp! if (str.class == String) # may be strip! ?
 
+<<<<<<< HEAD:shogi_server/player.rb
         delay = Time.now - time
         if delay > 5
           log_warning("Detected a long delay: %.2f sec" % [delay])
         end
         cmd = ShogiServer::Command.factory(str, self, time)
+=======
+        cmd = ShogiServer::Command.factory(str, self)
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
         case cmd.call
         when :return
           return
@@ -297,7 +358,10 @@ class Player < BasicPlayer
     end # enf of while
   end # def run
 
+<<<<<<< HEAD:shogi_server/player.rb
   #For restful authentication.
+=======
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:shogi_server/player.rb
   def self.password_digest(password, salt)
     digest = REST_AUTH_SITE_KEY
     REST_AUTH_DIGEST_STRETCHES.times do

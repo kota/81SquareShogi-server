@@ -302,7 +302,11 @@ __END__
 
 <div id="ft">
   <p>Last modified at <%=Time.now%>
+<<<<<<< HEAD:mk_html
   <p>$Revision$
+=======
+  <p>$Revision: 318 $
+>>>>>>> 487562a5e7ff58024c8927ab05a30d198f605050:mk_html
 </div>
 
 </div></body>

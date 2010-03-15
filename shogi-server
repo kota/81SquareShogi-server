@@ -238,8 +238,7 @@ def login_loop(client)
       str =~ /([\r\n]*)$/
       eol = $1
       if (ShogiServer::Login::good_login?(str))
-        if player = ShogiServer::Player.find(:first,:params => {:login => str.split[1]})
-          log_message("PLAYER:#{player.inspect}")
+        if player = ShogiServer::Player.find(:first,:conditions => ['login = ?',str.split[1]])
           player.init(str,client,eol)
           login  = ShogiServer::Login::factory(str, player)
           log_message(sprintf("PASSWORD = %s", player.password))
