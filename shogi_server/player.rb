@@ -100,6 +100,16 @@ class BasicPlayer < ActiveResource::Base
       @player_id = @password = nil
     end
   end
+
+  def update_rate(loser)
+    diff = 16 + ((loser.rate - rate)*0.04)
+    diff = [[1,diff].max,31].min
+    self.rate = self.rate + diff
+    save
+    loser.rate = loser.rate - diff
+    loser.save
+  end
+
 end
 
 
