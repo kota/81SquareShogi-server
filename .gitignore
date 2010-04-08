@@ -1,3 +1,4 @@
 log/
-players.yml
+players.yaml
 *.log
+*.pid
