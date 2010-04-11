@@ -249,14 +249,14 @@ class Player < BasicPlayer
   def to_s
     if ["game_waiting", "start_waiting", "agree_waiting", "game"].include?(status)
       if (@sente)
-        return sprintf("%s %s %s %s +", rated? ? @player_id : @name, @protocol, @status, @game_name)
+        return sprintf("%s %s %s %s + %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
       elsif (@sente == false)
-        return sprintf("%s %s %s %s -", rated? ? @player_id : @name, @protocol, @status, @game_name)
+        return sprintf("%s %s %s %s - %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
       elsif (@sente == nil)
-        return sprintf("%s %s %s %s *", rated? ? @player_id : @name, @protocol, @status, @game_name)
+        return sprintf("%s %s %s %s * %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
       end
     else
-      return sprintf("%s %s %s", rated? ? @player_id : @name, @protocol, @status)
+      return sprintf("%s %s %s %d", rated? ? @player_id : @name, @protocol, @status, rate)
     end
   end
 
