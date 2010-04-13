@@ -79,8 +79,6 @@ class Game
     log_message(sprintf("game created %s", @game_id))
 
     @start_time = nil
-    #@fh = open(@logfile, "w")
-    #@fh.sync = true
     @kifu = Kifu.new({:blackid => @sente.id,:whiteid => @gote.id,:contents => ""})
     @result = nil
 
@@ -117,11 +115,6 @@ class Game
   end
 
   def log_game(str)
-    #if @fh.closed?
-    #  log_error("Failed to write to Game[%s]'s log file: %s" %
-    #            [@game_id, str])
-    #end
-    #@fh.printf("%s\n", str)
     @kifu.contents += "#{str}\n"
   end
 
@@ -153,8 +146,6 @@ class Game
     # rejected, a GameResult object is not yet instanciated.
     # See test/TC_before_agree.rb.
     end_time = @result ? @result.end_time : Time.now
-    #@fh.printf("'$END_TIME:%s\n", end_time.strftime("%Y/%m/%d %H:%M:%S"))    
-    #@fh.close
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
@@ -214,14 +205,12 @@ class Game
       # log_debug("move_status: %s for %s's %s" % [move_status, @sente == @current_player ? "BLACK" : "WHITE", str])
 
       if [:illegal, :uchifuzume, :oute_kaihimore].include?(move_status)
-        #@fh.printf("'ILLEGAL_MOVE(%s)\n", str)
         @kifu.contents += "'ILLEGAL_MOVE(#{str})\n"
       else
         if :toryo != move_status
           # Thinking time includes network traffic
           @sente.write_safe(sprintf("%s,T%d\n", str, t))
           @gote.write_safe(sprintf("%s,T%d\n", str, t))
-          #@fh.printf("%s\nT%d\n", str, t)
           @kifu.contents += "#{str}\nT#{t}\n"
           @last_move = sprintf("%s,T%d", str, t)
           @current_turn += 1
@@ -291,11 +280,6 @@ class Game
   end
 
   def propose
-    #@fh.puts("V2")
-    #@fh.puts("N+#{@sente.name}")
-    #@fh.puts("N-#{@gote.name}")
-    #@fh.puts("$EVENT:#{@game_id}")
-
     @kifu.contents += "V2\n"
     @kifu.contents += "N+#{@sente.name}\n"
     @kifu.contents += "N-#{@gote.name}\n"
@@ -305,19 +289,6 @@ class Game
     @gote.write_safe(propose_message("-"))
 
     now = Time::new.strftime("%Y/%m/%d %H:%M:%S")
-    #@fh.puts("$START_TIME:#{now}")
-#    @fh.print <<EOM
-#P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
-#P2 * -HI *  *  *  *  * -KA * 
-#P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
-#P4 *  *  *  *  *  *  *  *  * 
-#P5 *  *  *  *  *  *  *  *  * 
-#P6 *  *  *  *  *  *  *  *  * 
-#P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
-#P8 * +KA *  *  *  *  * +HI * 
-#P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
-#+
-#EOM
     @kifu.contents += "$START_TIME:#{now}\n"
     @kifu.contents += <<EOM
 P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
