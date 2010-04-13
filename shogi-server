@@ -395,6 +395,7 @@ def main
       FileUtils.rm($options["pid-file"], :force => true)
     end
   end
+  config[:MaxClients]     = 1000
 
   srand
   server = WEBrick::GenericServer.new(config)

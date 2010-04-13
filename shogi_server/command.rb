@@ -288,8 +288,8 @@ module ShogiServer
     def ==(rhs)
       return rhs != nil &&
              rhs.is_a?(MonitorHandler) &&
-             @player = rhs.player &&
-             @type   = rhs.type
+             @player == rhs.player &&
+             @type   == rhs.type
     end
 
     def write_safe(game_id, str)
@@ -367,7 +367,8 @@ module ShogiServer
       if (@game)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
-        lines = IO::readlines(@game.logfile).join("")
+        #lines = IO::readlines(@game.logfile).join("")
+        lines = @game.kifu.contents
         monitor_handler.write_safe(@game_id, lines)
       end
       return :continue

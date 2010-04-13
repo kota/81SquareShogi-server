@@ -40,6 +40,7 @@ require 'shogi_server/usi'
 require 'shogi_server/util'
 require 'shogi_server/command'
 require 'shogi_server/buoy'
+require 'shogi_server/kifu'
 
 module ShogiServer # for a namespace
 
