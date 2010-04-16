@@ -367,9 +367,21 @@ module ShogiServer
       if (@game)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
-        #lines = IO::readlines(@game.logfile).join("")
-        lines = @game.kifu.contents
-        monitor_handler.write_safe(@game_id, lines)
+        lines = @game.kifu.contents.split("\n")
+        tmp = []
+        while(line = lines.shift) # Write starting position and the first move.
+          tmp.push(line)
+          if line =~ /^T[0-9]+$/
+            monitor_handler.write_safe(@game_id, tmp.join("\n"))
+            break;
+          end
+        end
+        while(lines.size > 1) # Write rest of the moves.
+            monitor_handler.write_safe(@game_id, lines.slice!(0,2).join("\n")) #move&time
+        end
+        if(lines.size > 0)
+          monitor_handler.write_safe(@game_id, lines.join("\n"))
+        end
       end
       return :continue
     end
