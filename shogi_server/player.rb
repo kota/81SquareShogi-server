@@ -103,7 +103,7 @@ class BasicPlayer < ActiveResource::Base
 
   def update_rate(loser)
     diff = 16 + ((loser.rate - rate)*0.04)
-    diff = [[1,diff].max,31].min
+    diff = [[1,diff].max,31].min.to_i
     self.rate = self.rate + diff
     save
     loser.rate = loser.rate - diff
