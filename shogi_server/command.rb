@@ -55,6 +55,9 @@ module ShogiServer
       when /^%%MONITOR2OFF\s+(\S+)/
         game_id = $1
         cmd = Monitor2OffCommand.new(str, player, $league.games[game_id])
+      when /^%%%WATCHERS\s+(\S+)/
+        game_id = $1
+        cmd = WatchersCommand.new(str, player, $league.games[game_id])
       when /^%%HELP/
         cmd = HelpCommand.new(str, player)
       when /^%%RATING/
@@ -392,6 +395,27 @@ module ShogiServer
       super
     end
   end
+
+  # Command of Watchers. Extended functionality for 81 dojo.
+  #
+  class WatchersCommand < BaseCommandForGame
+    def initialize(str, player, game)
+      super
+    end
+
+    def call
+      if (@game)
+        watchers = ""
+        @game.each_monitor{ |monitor_handler|
+          watchers += "##[WATCHERS] #{monitor_handler.player.name}\n"
+        }
+        @player.write_safe(watchers)
+      end
+      @player.write_safe("##[WATCHERS] +OK\n")
+      return :continue
+    end
+  end
+
 
   # Command of HELP
   #
