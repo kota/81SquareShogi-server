@@ -197,6 +197,7 @@ class Player < BasicPlayer
         log_debug("Terminating %s's write thread..." % [@name])
         if @write_thread && @write_thread.alive?
           write_safe(nil)
+          Thread.pass # help the write_thread to terminate
         end
         @player_logger.close if @player_logger
         log_debug("done.")
@@ -305,6 +306,7 @@ class Player < BasicPlayer
         $mutex.unlock
       end
     end # enf of while
+    log_warning("%s's socket was suddenly closed" % [@name])
   end # def run
 
   #For restful authentication.

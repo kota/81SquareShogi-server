@@ -43,6 +43,12 @@ REST_AUTH_DIGEST_STRETCHES = 10
 
 ShogiServer.reload
 
+# Return
+#   - a received string
+#   - :timeout
+#   - :exception
+#   - nil when a socket is closed
+#
 def gets_safe(socket, timeout=nil)
   if r = select([socket], nil, nil, timeout)
     return r[0].first.gets
