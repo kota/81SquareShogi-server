@@ -372,9 +372,9 @@ module ShogiServer
         @game.monitoron(monitor_handler)
         lines = @game.kifu.contents.split("\n")
         tmp = []
-        while(line = lines.shift) # Write starting position and the first move.
+        while(line = lines.shift) # Write starting position.
           tmp.push(line)
-          if line =~ /^[-+]$/
+          if line =~ /^'rating:(.*)$/
             monitor_handler.write_safe(@game_id, tmp.join("\n"))
             break;
           end
