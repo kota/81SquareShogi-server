@@ -374,7 +374,7 @@ module ShogiServer
         tmp = []
         while(line = lines.shift) # Write starting position and the first move.
           tmp.push(line)
-          if line =~ /^T[0-9]+$/
+          if line =~ /^[-+]$/
             monitor_handler.write_safe(@game_id, tmp.join("\n"))
             break;
           end
