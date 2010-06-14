@@ -35,7 +35,7 @@ class Game
     @game_name = game_name
     if (@game_name =~ /-(\d+)-(\d+)$/)
       @total_time = $1.to_i
-      @byoyomi = $2.to_i
+      @byoyomi = $2.to_i + 3
     end
 
     if (player0.sente)
