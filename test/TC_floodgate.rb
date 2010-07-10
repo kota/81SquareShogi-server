@@ -4,36 +4,9 @@ require 'shogi_server'
 require 'shogi_server/player'
 require 'shogi_server/pairing'
 require 'shogi_server/league/floodgate'
+require 'test/mock_log_message'
 
 $topdir = File.expand_path File.dirname(__FILE__)
-
-class MockLogger
-  def debug(str)
-    #puts str
-  end
-  def info(str)
-    #puts str
-  end
-  def warn(str)
-    puts str
-  end
-  def error(str)
-    puts str
-  end
-end
-
-$logger = MockLogger.new
-def log_message(msg)
-  $logger.info(msg)
-end
-
-def log_warning(msg)
-  $logger.warn(msg)
-end
-
-def log_error(msg)
-  $logger.error(msg)
-end
 
 class TestFloodgate < Test::Unit::TestCase
   def setup
@@ -48,6 +21,15 @@ class TestFloodgate < Test::Unit::TestCase
     assert(ShogiServer::League::Floodgate.game_name?("floodgate-900-0"))
     assert(ShogiServer::League::Floodgate.game_name?("floodgate-0-10"))
     assert(!ShogiServer::League::Floodgate.game_name?("floodgat-900-0"))
+  end
+
+  def test_instance_game_name
+    fg = ShogiServer::League::Floodgate.new(nil, "floodgate-900-0")
+    assert(fg.game_name?("floodgate-900-0"))
+    assert(!fg.game_name?("floodgate-3600-0"))
+    fg = ShogiServer::League::Floodgate.new(nil, "floodgate-3600-0")
+    assert(fg.game_name?("floodgate-900-0"))
+    assert(!fg.game_name?("floodgate-3600-0"))
   end
 
 end
