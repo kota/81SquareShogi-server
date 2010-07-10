@@ -95,7 +95,7 @@ class BasicPlayer < ActiveResource::Base
   def set_password(str)
     if str && !str.empty?
       @password = str.strip
-      @player_id   = "%s+%s" % [@name, Digest::SHA1.hexdigest(@password)]
+      @player_id = @name
     else
       @player_id = @password = nil
     end
