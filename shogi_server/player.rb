@@ -249,16 +249,21 @@ class Player < BasicPlayer
 
   def to_s
     if ["game_waiting", "start_waiting", "agree_waiting", "game"].include?(status)
-      if (@sente)
-        return sprintf("%s %s %s %s + %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
-      elsif (@sente == false)
-        return sprintf("%s %s %s %s - %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
-      elsif (@sente == nil)
-        return sprintf("%s %s %s %s * %d", rated? ? @player_id : @name, @protocol, @status, @game_name, rate)
-      end
+      return sprintf("%s %s %s %s %s %d %d", 
+                     rated? ? @player_id : @name,
+                     @protocol,
+                     @status,
+                     @game_name,
+                     @sente ? '+' : @sente==false ? '-' : '*',
+                     rate,
+                     country_code)
     else
-      return sprintf("%s %s %s %d", rated? ? @player_id : @name, @protocol, @status, rate)
+      return sprintf("%s %s %s %d %d", rated? ? @player_id : @name, @protocol, @status, rate, country_code)
     end
+  end
+
+  def country_code
+    respond_to?(:country) ? country.code : 0
   end
 
   def run(csa_1st_str=nil)
