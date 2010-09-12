@@ -249,7 +249,7 @@ class Player < BasicPlayer
 
   def to_s
     return sprintf("%s %s %s %s %s %d %d", 
-                   @name,
+                   name,
                    @protocol,
                    @status,
                    @game_name != '' ? @game_name : '*',
