@@ -248,18 +248,14 @@ class Player < BasicPlayer
   end
 
   def to_s
-    if ["game_waiting", "start_waiting", "agree_waiting", "game"].include?(status)
-      return sprintf("%s %s %s %s %s %d %d", 
-                     rated? ? @player_id : @name,
-                     @protocol,
-                     @status,
-                     @game_name,
-                     @sente ? '+' : @sente==false ? '-' : '*',
-                     rate,
-                     country_code)
-    else
-      return sprintf("%s %s %s %d %d", rated? ? @player_id : @name, @protocol, @status, rate, country_code)
-    end
+    return sprintf("%s %s %s %s %s %d %d", 
+                   @name,
+                   @protocol,
+                   @status,
+                   @game_name != '' ? @game_name : '*',
+                   @sente ? '+' : @sente==false ? '-' : '*',
+                   rate,
+                   country_code)
   end
 
   def country_code
