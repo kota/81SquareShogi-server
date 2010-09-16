@@ -290,18 +290,7 @@ class Game
 
     now = Time::new.strftime("%Y/%m/%d %H:%M:%S")
     @kifu.contents += "$START_TIME:#{now}\n"
-    @kifu.contents += <<EOM
-P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
-P2 * -HI *  *  *  *  * -KA * 
-P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
-P4 *  *  *  *  *  *  *  *  * 
-P5 *  *  *  *  *  *  *  *  * 
-P6 *  *  *  *  *  *  *  *  * 
-P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
-P8 * +KA *  *  *  *  * +HI * 
-P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
-+
-EOM
+    @kifu.contents += "#{@board.to_s.chomp}\n"
 
     if rated?
       black_name = @sente.rated? ? @sente.player_id : @sente.name
