@@ -149,7 +149,7 @@ class Game
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
-    if @result
+    if (@result && @game_name =~ /^r_/)
       @result.winner.update_rate(@result.loser)
     end
 
