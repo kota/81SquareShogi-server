@@ -204,23 +204,22 @@ class Game
       move_status = @board.handle_one_move(str, @sente == @current_player)
       # log_debug("move_status: %s for %s's %s" % [move_status, @sente == @current_player ? "BLACK" : "WHITE", str])
 
+      if :toryo != move_status
+        # Thinking time includes network traffic
+        @sente.write_safe(sprintf("%s,T%d\n", str, t))
+        @gote.write_safe(sprintf("%s,T%d\n", str, t))
+        @kifu.contents += "#{str}\nT#{t}\n"
+        @last_move = sprintf("%s,T%d", str, t)
+        @current_turn += 1
+
+        @monitors.each do |monitor_handler|
+          monitor_handler.write_one_move(@game_id, self)
+        end
+      end # if
+        # if move_status is :toryo then a GameResult message will be sent to monitors   
       if [:illegal, :uchifuzume, :oute_kaihimore].include?(move_status)
         @kifu.contents += "'ILLEGAL_MOVE(#{str})\n"
-      else
-        if :toryo != move_status
-          # Thinking time includes network traffic
-          @sente.write_safe(sprintf("%s,T%d\n", str, t))
-          @gote.write_safe(sprintf("%s,T%d\n", str, t))
-          @kifu.contents += "#{str}\nT#{t}\n"
-          @last_move = sprintf("%s,T%d", str, t)
-          @current_turn += 1
-
-          @monitors.each do |monitor_handler|
-            monitor_handler.write_one_move(@game_id, self)
-          end
-        end # if
-        # if move_status is :toryo then a GameResult message will be sent to monitors   
-      end # if
+      end
     end
 
     @result = nil
