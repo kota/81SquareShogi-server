@@ -72,6 +72,12 @@ class Login
       ret = HC8PBoard
     when %r!^hc10p_!
       ret = HC10PBoard
+    when %r!^hctombo_!
+      ret = HCTOMBOBoard
+    when %r!^hcfu3_!
+      ret = HCFU3Board
+    when %r!^hcnaked_!
+      ret = HCNAKEDBoard
     else
       ret = false
     end

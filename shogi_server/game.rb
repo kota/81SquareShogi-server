@@ -283,6 +283,7 @@ class Game
     @kifu.contents += "V2\n"
     @kifu.contents += "N+#{@sente.name}\n"
     @kifu.contents += "N-#{@gote.name}\n"
+    @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
 
     @sente.write_safe(propose_message("+"))
