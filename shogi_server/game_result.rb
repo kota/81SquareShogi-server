@@ -327,7 +327,7 @@ class GameResultDraw < GameResult
 end
 
 class GameResultSennichiteDraw < GameResultDraw
-  def initialize(game, winner, loser)
+  def initialize(game, p1, p2)
     super
     @log_summary_type = "sennichite"
     @result_type      = "#SENNICHITE"
