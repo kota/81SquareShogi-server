@@ -399,7 +399,7 @@ class HCNAKEDBoard < Board
     #PieceKE::new(self, 2, 1, false)
     #PieceGI::new(self, 3, 1, false)
     #PieceKI::new(self, 4, 1, false)
-    #PieceOU::new(self, 5, 1, false)
+    PieceOU::new(self, 5, 1, false)
     #PieceKI::new(self, 6, 1, false)
     #PieceGI::new(self, 7, 1, false)
     #PieceKE::new(self, 8, 1, false)
