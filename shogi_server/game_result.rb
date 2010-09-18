@@ -172,7 +172,7 @@ class GameResultAbnormalWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "abnormal"
-    @result_type      = "%TORYO"
+    @result_type      = "#RESIGN"
   end
 
   def process
@@ -194,7 +194,7 @@ class GameResultTimeoutWin < GameResultWin
   def process
     @winner.write_safe("#TIME_UP\n#WIN\n")
     @loser.write_safe( "#TIME_UP\n#LOSE\n")
-    # no log
+    log(@result_type)
     log_summary
     notify
   end
@@ -244,7 +244,7 @@ class GameResultIllegalWin < GameResultWin
   def process
     @winner.write_safe("#ILLEGAL_MOVE\n#WIN\n")
     @loser.write_safe( "#ILLEGAL_MOVE\n#LOSE\n")
-    # no log
+    log(@result_type)
     log_summary
     notify
   end
@@ -280,7 +280,7 @@ class GameResultToryoWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "toryo"
-    @result_type      = "%TORYO"
+    @result_type      = "#RESIGN"
   end
 
   def process
@@ -302,7 +302,7 @@ class GameResultOuteSennichiteWin < GameResultWin
   def process
     @winner.write_safe("#OUTE_SENNICHITE\n#WIN\n")
     @loser.write_safe( "#OUTE_SENNICHITE\n#LOSE\n")
-    # no log
+    log(@result_type)
     log_summary
     notify
   end

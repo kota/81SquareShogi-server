@@ -194,7 +194,7 @@ class Game
         ((@total_time > 0) || (@byoyomi > 0)))
       status = :timeout
     elsif (str == :timeout or str == '%%%TIMEOUT' )
-      return false            # time isn't expired. players aren't swapped. continue game
+      status = :timeout #return false            # time isn't expired. players aren't swapped. continue game
     else
       @current_player.mytime -= t
       if (@current_player.mytime < 0)
@@ -204,7 +204,7 @@ class Game
       move_status = @board.handle_one_move(str, @sente == @current_player)
       # log_debug("move_status: %s for %s's %s" % [move_status, @sente == @current_player ? "BLACK" : "WHITE", str])
 
-      if :toryo != move_status
+#      if :toryo != move_status
         # Thinking time includes network traffic
         @sente.write_safe(sprintf("%s,T%d\n", str, t))
         @gote.write_safe(sprintf("%s,T%d\n", str, t))
@@ -215,7 +215,7 @@ class Game
         @monitors.each do |monitor_handler|
           monitor_handler.write_one_move(@game_id, self)
         end
-      end # if
+#      end # if
         # if move_status is :toryo then a GameResult message will be sent to monitors   
       if [:illegal, :uchifuzume, :oute_kaihimore].include?(move_status)
         @kifu.contents += "'ILLEGAL_MOVE(#{str})\n"
