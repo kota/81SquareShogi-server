@@ -50,6 +50,9 @@ class BasicPlayer < ActiveResource::Base
 
   # game name
   attr_accessor :game_name
+  
+  # opponent
+  attr_accessor :opponent
 
   def is_human?
     return [%r!_human$!, %r!_human@!].any? do |re|
@@ -123,6 +126,8 @@ class Player < BasicPlayer
     @last_game_win = false
     @sente = nil
     @game_name = ""
+    @monitor_game = nil
+    @opponent = nil
 
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
@@ -140,7 +145,7 @@ class Player < BasicPlayer
   end
 
   attr_accessor :socket, :status
-  attr_accessor :protocol, :eol, :game, :mytime
+  attr_accessor :protocol, :eol, :game, :mytime, :monitor_game
   attr_accessor :main_thread
   attr_reader :socket_buffer
   
@@ -248,14 +253,16 @@ class Player < BasicPlayer
   end
 
   def to_s
-    return sprintf("%s %s %s %s %s %d %d", 
+    return sprintf("%s %s %s %s %s %d %d %s %s", 
                    name,
                    @protocol,
                    @status,
                    @game_name != '' ? @game_name : '*',
                    @sente ? '+' : @sente==false ? '-' : '*',
                    rate,
-                   country_code)
+                   country_code,
+                   @opponent ? @opponent.name : '*',
+                   @monitor_game ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*')
   end
 
   def country_code

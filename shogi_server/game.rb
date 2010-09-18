@@ -53,6 +53,8 @@ class Game
     end
     @sente.game = self
     @gote.game  = self
+    @sente.opponent = @gote
+    @gote.opponent = @sente
 
     @last_move = @board.initial_moves.empty? ? "" : "%s,T1" % [@board.initial_moves.last]
     @current_turn = @board.initial_moves.size
@@ -155,6 +157,10 @@ class Game
 
     @sente.game = nil
     @gote.game = nil
+    @sente.game_name = ""
+    @gote.game_name = ""
+    @sente.opponent = nil
+    @gote.opponent = nil
     @sente.status = "connected"
     @gote.status = "connected"
 
@@ -163,6 +169,9 @@ class Game
     end
     if (@next_player.protocol == LoginCSA::PROTOCOL)
       @next_player.finish
+    end
+    @monitors.each do |monitor_handler|
+      monitor_handler.player.monitor_game = nil
     end
     @monitors = Array::new
     @sente = nil

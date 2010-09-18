@@ -370,6 +370,7 @@ module ShogiServer
       if (@game)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
+        @player.monitor_game = @game
         lines = @game.kifu.contents.split("\n")
         tmp = []
         while(line = lines.shift) # Write starting position.
@@ -398,6 +399,7 @@ module ShogiServer
     def call
       if (@game)
         @game.monitoroff(MonitorHandler2.new(@player))
+        @player.monitor_game = nil
       end
       return :continue
     end
