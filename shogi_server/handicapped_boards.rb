@@ -25,7 +25,7 @@ module ShogiServer # for a namespace
 #
 class HCKYBoard < Board
   def initial
-    PieceKY::new(self, 1, 1, false)
+    #PieceKY::new(self, 1, 1, false)
     PieceKE::new(self, 2, 1, false)
     PieceGI::new(self, 3, 1, false)
     PieceKI::new(self, 4, 1, false)
@@ -33,7 +33,7 @@ class HCKYBoard < Board
     PieceKI::new(self, 6, 1, false)
     PieceGI::new(self, 7, 1, false)
     PieceKE::new(self, 8, 1, false)
-    #PieceKY::new(self, 9, 1, false)
+    PieceKY::new(self, 9, 1, false)
     PieceKA::new(self, 2, 2, false)
     PieceHI::new(self, 8, 2, false)
     (1..9).each do |i|
