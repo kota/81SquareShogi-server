@@ -265,9 +265,13 @@ module ShogiServer
 
     def call
       if (@player.status == "post_game")
+        @game = @player.game
         @player.status = "connected"
-        if (@player.game.is_closable_status?)
-          @player.game.close
+        @player.game = nil
+        @player.game_name = ""
+        @player.opponent = nil
+        if (@game.is_closable_status?)
+          @game.close
         end
       else
         log_error("Received a command [#{@str}] from #{@player.name} in an inappropriate status [#{@player.status}].")

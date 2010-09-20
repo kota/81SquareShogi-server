@@ -138,8 +138,8 @@ class Game
       @result = GameResultAbnormalWin.new(self, @next_player, @current_player)
       @result.process
       finish
-      close
     end
+    close
   end
 
   def finish
@@ -165,24 +165,18 @@ class Game
     if (@next_player.protocol == LoginCSA::PROTOCOL)
       @next_player.finish
     end
+    @current_player = nil
+    @next_player = nil
   end
   
   def close
     log_message(sprintf("game closed %s", @game_id))
-    @sente.game = nil
-    @gote.game = nil
-    @sente.game_name = ""
-    @gote.game_name = ""
-    @sente.opponent = nil
-    @gote.opponent = nil
     @monitors.each do |monitor_handler|
       monitor_handler.player.monitor_game = nil
     end
     @monitors = Array::new
     @sente = nil
     @gote = nil
-    @current_player = nil
-    @next_player = nil
     $league.games.delete(@game_id)
   end
 
@@ -283,8 +277,8 @@ class Game
   
   def is_closable_status?
     return (@sente && @gote &&
-            (@sente.status != "post_game") &&
-            (@gote.status  != "post_game"))
+            (@sente.game != self) &&
+            (@gote.game != self))
   end
 
   def start
