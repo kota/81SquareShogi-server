@@ -138,6 +138,7 @@ class Game
       @result = GameResultAbnormalWin.new(self, @next_player, @current_player)
       @result.process
       finish
+      close
     end
   end
 
@@ -155,14 +156,8 @@ class Game
       @result.winner.update_rate(@result.loser)
     end
 
-    @sente.game = nil
-    @gote.game = nil
-    @sente.game_name = ""
-    @gote.game_name = ""
-    @sente.opponent = nil
-    @gote.opponent = nil
-    @sente.status = "connected"
-    @gote.status = "connected"
+    @sente.status = "post_game" if @sente.status = "game"
+    @gote.status = "post_game" if @gote.status = "game"
 
     if (@current_player.protocol == LoginCSA::PROTOCOL)
       @current_player.finish
@@ -170,6 +165,16 @@ class Game
     if (@next_player.protocol == LoginCSA::PROTOCOL)
       @next_player.finish
     end
+  end
+  
+  def close
+    log_message(sprintf("game closed %s", @game_id))
+    @sente.game = nil
+    @gote.game = nil
+    @sente.game_name = ""
+    @gote.game_name = ""
+    @sente.opponent = nil
+    @gote.opponent = nil
     @monitors.each do |monitor_handler|
       monitor_handler.player.monitor_game = nil
     end
@@ -274,6 +279,12 @@ class Game
     return (@sente && @gote &&
             (@sente.status == "start_waiting") &&
             (@gote.status  == "start_waiting"))
+  end
+  
+  def is_closable_status?
+    return (@sente && @gote &&
+            (@sente.status == "connected") &&
+            (@gote.status  == "connected"))
   end
 
   def start

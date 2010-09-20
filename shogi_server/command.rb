@@ -40,6 +40,8 @@ module ShogiServer
         cmd = RejectCommand.new(str, player)
       when /^AGREE/
         cmd = AgreeCommand.new(str, player)
+      when /^CLOSE/
+        cmd = CloseCommand.new(str, player)
       when /^%%SHOW\s+(\S+)/
         game_id = $1
         cmd = ShowCommand.new(str, player, $league.games[game_id])
@@ -253,7 +255,28 @@ module ShogiServer
       return :continue
     end
   end
+  
+  # Command of CLOSE
+  #
+  class CloseCommand < Command
+    def initialize(str, player)
+      super
+    end
 
+    def call
+      if (@player.status == "post_game")
+        @player.status = "connected"
+        if (@player.game.is_closable_status?)
+          @player.game.close
+        end
+      else
+        log_error("Received a command [#{@str}] from #{@player.name} in an inappropriate status [#{@player.status}].")
+        @player.write_safe(sprintf("##[ERROR] you are in %s status. CLOSE is valid in agree_waiting status\n", @player.status))
+      end
+      return :continue
+    end
+  end
+  
   # Base Command calss requiring a game instance
   #
   class BaseCommandForGame < Command
@@ -425,7 +448,6 @@ module ShogiServer
       return :continue
     end
   end
-
 
   # Command of HELP
   #
