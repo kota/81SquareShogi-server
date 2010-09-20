@@ -283,8 +283,8 @@ class Game
   
   def is_closable_status?
     return (@sente && @gote &&
-            (@sente.status == "connected") &&
-            (@gote.status  == "connected"))
+            (@sente.status != "post_game") &&
+            (@gote.status  != "post_game"))
   end
 
   def start
