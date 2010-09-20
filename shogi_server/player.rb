@@ -253,7 +253,7 @@ class Player < BasicPlayer
   end
 
   def to_s
-    return sprintf("%s %s %s %s %s %d %d %s %s", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d", 
                    name,
                    @protocol,
                    @status,
@@ -262,7 +262,8 @@ class Player < BasicPlayer
                    rate,
                    country_code,
                    @opponent ? @opponent.name : '*',
-                   @monitor_game ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*')
+                   @monitor_game ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*',
+                   @game ? @game.current_turn : 0)
   end
 
   def country_code
