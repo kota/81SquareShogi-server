@@ -383,10 +383,7 @@ def main
       player.run(login.csa_1st_str) # loop
       $mutex.lock
       begin
-        if (player.game)
-          player.game.kill(player)
-        end
-        player.finish # socket has been closed
+        player.kill2
         $league.delete(player)
         log_message(sprintf("user %s logout", player.name))
       ensure

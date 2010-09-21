@@ -172,12 +172,12 @@ class GameResultAbnormalWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "abnormal"
-    @result_type      = "#RESIGN"
+    @result_type      = "#DISCONNECT"
   end
 
   def process
-    @winner.write_safe("%TORYO\n#RESIGN\n#WIN\n")
-    @loser.write_safe( "%TORYO\n#RESIGN\n#LOSE\n")
+    @winner.write_safe("#DISCONNECT\n#WIN\n")
+    #@loser.write_safe("#DISCONNECT\n#LOSE\n")
     log(@result_type)
     log_summary
     notify

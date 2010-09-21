@@ -193,6 +193,17 @@ class Player < BasicPlayer
     Thread::kill(@main_thread)  if @main_thread
     Thread::kill(@write_thread) if @write_thread
   end
+  
+  def kill2
+    log_message(sprintf("user %s killed", @name))
+    if (@game)
+      @game.kill(self)
+    end
+    if (@monitor_game)
+      @monitor_game.monitoroff(MonitorHandler2.new(self))
+    end
+    finish
+  end
 
   def finish
     if (@status != "finished")

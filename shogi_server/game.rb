@@ -139,7 +139,18 @@ class Game
       @result.process
       finish
     end
-    close
+    if (@next_player == killer)
+      @result = GameResultAbnormalWin.new(self, @current_player, @next_player)
+      @result.process
+      finish
+    end
+    killer.game = nil
+    killer.game_name = ""
+    killer.opponent = nil
+    killer.status = "connected"
+    if (is_closable_status?)
+      close
+    end
   end
 
   def finish
