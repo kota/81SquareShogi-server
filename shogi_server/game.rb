@@ -124,6 +124,15 @@ class Game
     @sente.write_safe(sprintf("REJECT:%s by %s\n", @game_id, rejector))
     @gote.write_safe(sprintf("REJECT:%s by %s\n", @game_id, rejector))
     finish
+    @sente.game = nil
+    @gote.game = nil
+    @sente.game_name = ""
+    @gote.game_name = ""
+    @sente.opponent = nil
+    @gote.opponent = nil
+    @sente.status = "connected"
+    @gote.status = "connected"
+    close
   end
 
   def kill(killer)
