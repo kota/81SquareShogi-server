@@ -77,6 +77,10 @@ module ShogiServer
       when /^%%CHAT\s+(.+)/
         message = $1
         cmd = ChatCommand.new(str, player, message, $league.players)
+      when /^%%PRIVATECHAT\s+(\S+)\s+(.+)/
+        sendto = $1
+        message = $2
+        cmd = PrivateChatCommand.new(str, player, message, $league.find(sendto))
       when /^%%GAMECHAT\s+(\S+)\s+(.+)/
         game_id = $1
         message = $2
@@ -664,6 +668,26 @@ module ShogiServer
         if (p.protocol != LoginCSA::PROTOCOL)
           p.write_safe(sprintf("##[CHAT][%s] %s\n", @player.name, @message)) 
         end
+      end
+      return :continue
+    end
+  end
+
+  # Command of PRIVATECHAT
+  #
+  class PrivateChatCommand < Command
+
+    def initialize(str, player, message, sendto)
+      super(str, player)
+      @message = message
+      @sendto = sendto
+    end
+
+    def call
+      if (@sendto)
+        @sendto.write_safe(sprintf("##[PRIVATECHAT][%s] %s\n", @player.name, @message))
+      else
+        @player.write_safe(sprintf("##[PRIVATECHAT][#ERROR] *\n"))
       end
       return :continue
     end
