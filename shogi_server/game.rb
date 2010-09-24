@@ -175,6 +175,8 @@ class Game
 
     if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/)
       @result.winner.update_rate(@result.loser)
+      @result.winner.update_count(true)
+      @result.loser.update_count(false)
     end
 
     @sente.status = "post_game" if @sente.status = "game"

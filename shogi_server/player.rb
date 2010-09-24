@@ -264,7 +264,7 @@ class Player < BasicPlayer
   end
 
   def to_s
-    return sprintf("%s %s %s %s %s %d %d %s %s %d", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %d", 
                    name,
                    @protocol,
                    @status,
@@ -274,11 +274,37 @@ class Player < BasicPlayer
                    country_code,
                    @opponent ? @opponent.name : '*',
                    @monitor_game ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*',
-                   @game ? @game.current_turn : 0)
+                   @game ? @game.current_turn : 0,
+                   wins,
+                   losses,
+                   streak,
+                   streak_best)
   end
 
   def country_code
     respond_to?(:country) ? country.code : 0
+  end
+
+  def update_count(is_winner)
+    if (is_winner)
+      @attributes['wins'] = wins + 1
+      if (streak < 0)
+        @attributes['streak'] = 1
+      else
+        @attributes['streak'] = streak + 1
+      end
+      if (streak > streak_best)
+        @attributes['streak_best'] = streak
+      end
+    else
+      @attributes['losses'] = losses + 1
+      if (streak > 0)
+        @attributes['streak'] = -1
+      else
+        @attributes['streak'] = streak - 1
+      end
+    end
+    save
   end
 
   def run(csa_1st_str=nil)
