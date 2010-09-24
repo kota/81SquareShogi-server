@@ -108,6 +108,7 @@ class Game
 
   def monitoroff(monitor_handler)
     @monitors.delete_if {|mon| mon == monitor_handler}
+    close if (is_closable_status?)
   end
 
   def each_monitor
@@ -191,10 +192,6 @@ class Game
   
   def close
     log_message(sprintf("game closed %s", @game_id))
-    @monitors.each do |monitor_handler|
-      monitor_handler.player.monitor_game = nil
-    end
-    @monitors = Array::new
     @sente = nil
     @gote = nil
     $league.games.delete(@game_id)
@@ -300,7 +297,8 @@ class Game
   def is_closable_status?
     return (@sente && @gote &&
             (@sente.game != self) &&
-            (@gote.game != self))
+            (@gote.game != self) &&
+            (@monitors.length == 0))
   end
 
   def start

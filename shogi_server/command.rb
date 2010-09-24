@@ -77,6 +77,10 @@ module ShogiServer
       when /^%%CHAT\s+(.+)/
         message = $1
         cmd = ChatCommand.new(str, player, message, $league.players)
+      when /^%%GAMECHAT\s+(\S+)\s+(.+)/
+        game_id = $1
+        message = $2
+        cmd = GameChatCommand.new(str, player, $league.games[game_id], message)
       when /^%%LIST/
         cmd = ListCommand.new(str, player, $league.games)
       when /^%%WHO/
@@ -660,6 +664,36 @@ module ShogiServer
         if (p.protocol != LoginCSA::PROTOCOL)
           p.write_safe(sprintf("##[CHAT][%s] %s\n", @player.name, @message)) 
         end
+      end
+      return :continue
+    end
+  end
+
+  # Command of GAMECHAT
+  #
+  class GameChatCommand < BaseCommandForGame
+
+    def initialize(str, player, game, message)
+      super(str, player, game)
+      @message = message
+    end
+
+    def call
+      if (@game)
+        res = sprintf("##[GAMECHAT][%s] %s\n", @player.name, @message)
+        if (@game.sente && @game.sente.game == @game)
+          if (@game.sente.status == "post_game" || @player == @game.sente || @player == @game.gote)
+            @game.sente.write_safe(res)
+          end
+        end
+        if (@game.gote && @game.gote.game == @game)
+          if (@game.gote.status == "post_game" || @player == @game.sente || @player == @game.gote)
+            @game.gote.write_safe(res)
+          end
+        end
+        @game.each_monitor { |monitor_handler|
+          monitor_handler.player.write_safe(res)
+        }
       end
       return :continue
     end
