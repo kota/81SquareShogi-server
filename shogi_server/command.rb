@@ -452,7 +452,9 @@ module ShogiServer
       if (@game)
         watchers = ""
         @game.each_monitor{ |monitor_handler|
-          watchers += "##[WATCHERS] #{monitor_handler.player.name}\n"
+          watchers += sprintf("##[WATCHERS] %s %s %d\n", monitor_handler.player.name,
+                                                         monitor_handler.player.rate,
+                                                         monitor_handler.player.country_code)
         }
         @player.write_safe(watchers)
       end
