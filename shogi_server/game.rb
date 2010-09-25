@@ -174,7 +174,7 @@ class Game
     @kifu.save
 
     if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/)
-      @result.winner.update_rate(@result.loser)
+      @result.winner.update_rate(@result.loser, ((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1)
       @result.winner.update_count(true)
       @result.loser.update_count(false)
     end
