@@ -93,6 +93,9 @@ module ShogiServer
         cmd = LogoutCommand.new(str, player)
       when /^CHALLENGE/
         cmd = ChallengeCommand.new(str, player)
+      when /^%%GHOST\s+(\S+)/
+        ghost = $1
+        cmd = KillGhostCommand.new(str, player, $league.find(ghost))
       when /^%%SETBUOY\s+(\S+)\s+(\S+)(.*)/
         game_name = $1
         moves     = $2
@@ -804,6 +807,22 @@ module ShogiServer
       # This command is only available for CSA's official testing server.
       # So, this means nothing for this program.
       @player.write_safe("CHALLENGE ACCEPTED\n")
+      return :continue
+    end
+  end
+
+  class GhostKillCommand < Command
+    def initialize(str, player, ghost)
+      super
+      @ghost = ghost
+    end
+
+    def call
+      if (@ghost)
+        @ghost.kill2
+        $league.delete(@ghost)
+        log_error "Ghost of #{@ghost.name} was killed by #{@player.name}"
+      end
       return :continue
     end
   end
