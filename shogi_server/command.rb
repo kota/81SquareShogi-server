@@ -95,7 +95,7 @@ module ShogiServer
         cmd = ChallengeCommand.new(str, player)
       when /^%%GHOST\s+(\S+)/
         ghost = $1
-        cmd = KillGhostCommand.new(str, player, $league.find(ghost))
+        cmd = KillGhostCommand.new(str, player, $league.find(ghost), $league.games[ghost])
       when /^%%SETBUOY\s+(\S+)\s+(\S+)(.*)/
         game_name = $1
         moves     = $2
@@ -811,17 +811,28 @@ module ShogiServer
     end
   end
 
-  class GhostKillCommand < Command
-    def initialize(str, player, ghost)
-      super
-      @ghost = ghost
+  class KillGhostCommand < Command
+    def initialize(str, player, ghost_player, ghost_game)
+      super(str, player)
+      @ghost_player = ghost_player
+      @ghost_game = ghost_game
     end
 
     def call
-      if (@ghost)
-        @ghost.kill2
-        $league.delete(@ghost)
-        log_error "Ghost of #{@ghost.name} was killed by #{@player.name}"
+      if (@ghost_player)
+        @ghost_player.kill2
+        $league.delete(@ghost_player)
+        log_info("Ghost of #{@ghost_player.name} was killed by #{@player.name}")
+        @player.write_safe("You killed %s. (It is logged.)\n" % [@ghost_player.name])
+      elsif (@ghost_game)
+        if (@ghost_game.status != "finished")
+          @ghost_game.finish
+        end
+        @ghost_game.close
+        log_info("Ghost of #{@ghost_game.game_id} was killed by #{@player.name}")
+        @player.write_safe("You killed %s. (It is logged.)\n" % [@ghost_game.game_id])
+      elsif
+        @player.write_safe("No such ghost found\n")
       end
       return :continue
     end
