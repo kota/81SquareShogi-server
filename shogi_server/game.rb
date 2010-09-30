@@ -83,12 +83,13 @@ class Game
     @start_time = nil
     @kifu = Kifu.new({:blackid => @sente.id,:whiteid => @gote.id,:contents => ""})
     @result = nil
+    @status = "created"
 
     propose
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn
-  attr_reader   :result, :prepared_time, :kifu
+  attr_reader   :result, :prepared_time, :kifu, :status
 
   # Path of a log file for this game.
   attr_reader   :logfile
@@ -190,6 +191,7 @@ class Game
     end
     @current_player = nil
     @next_player = nil
+    @status = "finished"
   end
   
   def close
@@ -197,6 +199,7 @@ class Game
     @sente = nil
     @gote = nil
     $league.games.delete(@game_id)
+    @status = "closed"
   end
 
   # class Game
@@ -312,6 +315,7 @@ class Game
     @sente.mytime = @total_time
     @gote.mytime = @total_time
     @start_time = Time::new
+    @status = "game"
   end
 
   def propose

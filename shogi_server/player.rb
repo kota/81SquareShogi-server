@@ -196,7 +196,7 @@ class Player < BasicPlayer
   
   def kill2
     log_message(sprintf("user %s killed", @name))
-    if (@game)
+    if (@game && $league.games[@game.game_id])
       @game.kill(self)
     end
     if (@monitor_game)
@@ -273,7 +273,7 @@ class Player < BasicPlayer
                    rate,
                    country_code,
                    @opponent ? @opponent.name : '*',
-                   @monitor_game ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*',
+                   (@monitor_game && @monitor_game.status != "closed") ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*',
                    @game ? @game.current_turn : 0,
                    wins,
                    losses,
@@ -284,7 +284,7 @@ class Player < BasicPlayer
   def country_code
     respond_to?(:country) ? country.code : 0
   end
-
+  
   def update_count(is_winner)
     if (is_winner)
       @attributes['wins'] = wins + 1
