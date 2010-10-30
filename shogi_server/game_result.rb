@@ -143,9 +143,10 @@ class GameResult
 
   def log_summary
     log_board
-    log("'summary:%s:%s %s:%s %s" % [@log_summary_type, 
-                                     @black.name, black_result,
-                                     @white.name, white_result])
+    log("'summary:%s:%s %s:%s %s:%d" % [@log_summary_type, 
+                                        @black.name, black_result,
+                                        @white.name, white_result,
+                                        @game.current_turn])
   end
 end
 
