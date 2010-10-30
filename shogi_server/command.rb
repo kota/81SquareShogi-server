@@ -736,7 +736,7 @@ module ShogiServer
                          game.gote.rate,
                          game.sente.country_code,
                          game.gote.country_code,
-                         game.result == nil,
+                         game.status,
                          game.sente.game == game,
                          game.gote.game == game,
                          game.monitors.length))
