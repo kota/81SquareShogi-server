@@ -134,6 +134,7 @@ class Game
     @gote.opponent = nil
     @sente.status = "connected"
     @gote.status = "connected"
+    @kifu.destroy
     close
   end
 
