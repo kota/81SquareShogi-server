@@ -89,7 +89,7 @@ class Game
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn
-  attr_reader   :result, :prepared_time, :kifu, :status
+  attr_reader   :result, :prepared_time, :kifu, :status, :end_time
 
   # Path of a log file for this game.
   attr_reader   :logfile
@@ -315,6 +315,7 @@ class Game
     @sente.mytime = @total_time
     @gote.mytime = @total_time
     @start_time = Time::new
+    @end_time = @start_time
     @status = "game"
   end
 

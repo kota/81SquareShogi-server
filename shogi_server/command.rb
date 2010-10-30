@@ -409,21 +409,8 @@ module ShogiServer
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
         @player.monitor_game = @game
-        lines = @game.kifu.contents.split("\n")
-        tmp = []
-        while(line = lines.shift) # Write starting position.
-          tmp.push(line)
-          if line =~ /^'rating:(.*)$/
-            monitor_handler.write_safe(@game_id, tmp.join("\n"))
-            break;
-          end
-        end
-        while(lines.size > 1) # Write rest of the moves.
-            monitor_handler.write_safe(@game_id, lines.slice!(0,2).join("\n")) #move&time
-        end
-        if(lines.size > 0)
-          monitor_handler.write_safe(@game_id, lines.join("\n"))
-        end
+        since_last_move = sprintf("$SINCE_LAST_MOVE:%d", Time::new - @game.end_time)
+        monitor_handler.write_safe(@game_id, @game.kifu.contents.chomp + "\n" + since_last_move)
       end
       return :continue
     end
