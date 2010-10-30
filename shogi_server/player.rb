@@ -189,6 +189,9 @@ class Player < BasicPlayer
     if (@game)
       @game.kill(self)
     end
+    if (@monitor_game)
+      @monitor_game.monitoroff(MonitorHandler2.new(self))
+    end
     finish
     Thread::kill(@main_thread)  if @main_thread
     Thread::kill(@write_thread) if @write_thread
@@ -196,7 +199,7 @@ class Player < BasicPlayer
   
   def kill2
     log_message(sprintf("user %s killed", @name))
-    if (@game && $league.games[@game.game_id])
+    if (@game && @game.status != "closed")
       @game.kill(self)
     end
     if (@monitor_game)
