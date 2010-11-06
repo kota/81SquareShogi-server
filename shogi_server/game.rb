@@ -84,12 +84,13 @@ class Game
     @kifu = Kifu.new({:blackid => @sente.id,:whiteid => @gote.id,:contents => ""})
     @result = nil
     @status = "created"
+    @opening = "*"
 
     propose
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn
-  attr_reader   :result, :prepared_time, :kifu, :status, :end_time
+  attr_reader   :result, :prepared_time, :kifu, :status, :end_time, :opening
 
   # Path of a log file for this game.
   attr_reader   :logfile
@@ -244,6 +245,11 @@ class Game
         @kifu.contents += "#{str}\nT#{t}\n"
         @last_move = sprintf("%s,T%d", str, t)
         @current_turn += 1
+        
+        if (@game_name =~ /^(r|nr)_/ && @opening == "*" && @current_turn >= 10 && @current_turn <= 24)
+          @opening = @board.opening
+          @opening = "unknown" if (@opening == "*" && @current_turn == 24)
+        end
 
         @monitors.each do |monitor_handler|
           monitor_handler.write_one_move(@game_id, self)

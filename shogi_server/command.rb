@@ -729,7 +729,7 @@ module ShogiServer
     def call
       buf = Array::new
       @games.each do |id, game|
-        buf.push(sprintf("##[LIST] %s %d %d %d %d %d %s %s %s %d\n",
+        buf.push(sprintf("##[LIST] %s %d %d %d %d %d %s %s %s %d %s\n",
                          id,
                          game.current_turn,
                          game.sente.rate,
@@ -739,7 +739,8 @@ module ShogiServer
                          game.status,
                          game.sente.game == game,
                          game.gote.game == game,
-                         game.monitors.length))
+                         game.monitors.length,
+                         game.opening))
       end
       buf.push("##[LIST] +OK\n")
       @player.write_safe(buf.join)
