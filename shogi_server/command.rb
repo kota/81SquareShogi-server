@@ -698,12 +698,12 @@ module ShogiServer
       if (@game)
         res = sprintf("##[GAMECHAT][%s] %s\n", @player.name, @message)
         if (@game.sente && @game.sente.game == @game)
-          if (@game.sente.status == "post_game" || @player == @game.sente || @player == @game.gote)
+          if (!(@game.game_name =~ /^r_/) || @game.sente.status == "post_game" || @player == @game.sente || @player == @game.gote)
             @game.sente.write_safe(res)
           end
         end
         if (@game.gote && @game.gote.game == @game)
-          if (@game.gote.status == "post_game" || @player == @game.sente || @player == @game.gote)
+          if (!(@game.game_name =~ /^r_/) || @game.gote.status == "post_game" || @player == @game.sente || @player == @game.gote)
             @game.gote.write_safe(res)
           end
         end
