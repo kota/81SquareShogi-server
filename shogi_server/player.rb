@@ -278,7 +278,7 @@ class Player < BasicPlayer
                    rate,
                    country_code,
                    @opponent ? @opponent.name : '*',
-                   (@monitor_game && @monitor_game.status != "closed") ? (@monitor_game.sente.name + "+" + @monitor_game.gote.name) : '*',
+                   @monitor_game ? @monitor_game.game_id : '*',
                    @game ? @game.current_turn : 0,
                    wins,
                    losses,
