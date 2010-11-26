@@ -615,13 +615,14 @@ class Board
     elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU")
       return "double_wing"
     elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") &&
-           @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && look_for_hi(true) == 2 && look_for_hi(false) == 8)
+           @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && look_for_hi(true) == 2 && look_for_hi(false) == 8 && !@array[2][7])
       return "bishop_exchange"
     elsif (@move_count >= 17 && @move_count <= 24 && gote_hands.empty? && look_for_hi(true) == 2 && look_for_hi(false) == 8 &&
            (@array[8][8].to_s == "+KA" || @array[7][9].to_s == "+KA") &&
-           ((@array[7][7].to_s == "+GI" && look_for_ou(true).x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU")))
+           ((@array[7][7].to_s == "+GI" && look_for_ou(true).x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU")
+                                                                     || (@array[7][7].to_s == "+GI" && @array[7][8].to_s == "+KI" && @array[5][9].to_s == "+OU")))
       return "yagura"
-    elsif (@move_count == 16)
+    elsif (@move_count == 16 && @move_count <= 24)
       if (look_for_hi(false) <= 5 && look_for_ou(false).x >= 5)
         if (look_for_hi(true) >= 5 && look_for_ou(true).x <= 5)
           return "double_ranging"
