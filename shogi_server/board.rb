@@ -615,27 +615,29 @@ class Board
   end
   
   def opening
+    sente_hi = look_for_hi(true)
+    gote_hi = look_for_hi(false)
     if (@move_count >= 13 && @move_count <=17 && @array[3][4].to_s == "+HI" && !array[3][3] && !@array[3][5] && !have_piece?(@sente_hands, "KA"))
       return "side_pawn"
     elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU")
       return "double_wing"
-    elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") &&
-           @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && look_for_hi(true) == 2 && look_for_hi(false) == 8 && !@array[2][7])
+    elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") && !@array[3][5] && !@array[7][5] &&
+           @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && sente_hi == 2 && gote_hi == 8 && !@array[2][7])
       return "bishop_exchange"
-    elsif (@move_count >= 17 && @move_count <= 24 && gote_hands.empty? && look_for_hi(true) == 2 && look_for_hi(false) == 8 &&
+    elsif (@move_count >= 17 && @move_count <= 24 && gote_hands.empty? && sente_hi == 2 && gote_hi == 8 &&
            (@array[8][8].to_s == "+KA" || @array[7][9].to_s == "+KA") &&
-           ((@array[7][7].to_s == "+GI" && look_for_ou(true).x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU") ||
+           ((@array[7][7].to_s == "+GI" && @sente_ou.x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU") ||
            (@array[7][7].to_s == "+GI" && @array[7][8].to_s == "+KI" && @array[5][9].to_s == "+OU")))
       return "yagura"
     elsif (@move_count == 16 && @move_count <= 24)
-      if (look_for_hi(false) <= 5 && look_for_ou(false).x >= 5)
-        if (look_for_hi(true) >= 5 && look_for_ou(true).x <= 5)
+      if (gote_hi <= 5 && @gote_ou.x >= 5)
+        if (sente_hi >= 5 && @sente_ou.x <= 5)
           return "double_ranging"
         else
-          return "opposition_white" + look_for_hi(false).to_s
+          return "opposition_white" + gote_hi.to_s
         end
-      elsif (look_for_hi(true) >= 5 && look_for_ou(true).x <= 5)
-        return "opposition_black" + (10 - look_for_hi(true)).to_s
+      elsif (sente_hi >= 5 && @sente_ou.x <= 5)
+        return "opposition_black" + (10 - sente_hi).to_s
       else
         return "*"
       end
