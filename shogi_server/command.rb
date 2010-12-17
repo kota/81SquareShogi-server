@@ -283,6 +283,12 @@ module ShogiServer
         @player.opponent = nil
         if (@game.is_closable_status?)
           @game.close
+        else
+          @game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
+          @game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+          @game.each_monitor { |monitor_handler|
+            monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @player.name))
+          }
         end
       else
         log_error("Received a command [#{@str}] from #{@player.name} in an inappropriate status [#{@player.status}].")
@@ -411,6 +417,11 @@ module ShogiServer
         @player.monitor_game = @game
         since_last_move = sprintf("$SINCE_LAST_MOVE:%d", Time::new - @game.end_time)
         monitor_handler.write_safe(@game_id, @game.kifu.contents.chomp + "\n" + since_last_move)
+        @game.sente.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
+        @game.gote.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+        @game.each_monitor { |monitor_handler|
+          monitor_handler.player.write_safe(sprintf("##[ENTER][%s]\n", @player.name))
+        }
       end
       return :continue
     end
@@ -425,6 +436,11 @@ module ShogiServer
       if (@game)
         @game.monitoroff(MonitorHandler2.new(@player))
         @player.monitor_game = nil
+        @game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
+        @game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+        @game.each_monitor { |monitor_handler|
+          monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @player.name))
+        }
       end
       return :continue
     end
