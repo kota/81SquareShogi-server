@@ -207,7 +207,7 @@ class GameResultKachiWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "kachi"
-    @result_type      = "%KACHI"
+    @result_type      = "#JISHOGI"
   end
 
   def process
@@ -224,12 +224,12 @@ class GameResultIllegalKachiWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "illegal kachi"
-    @result_type      = "%KACHI"
+    @result_type      = "#ILLEGAL_MOVE"
   end
 
   def process
-    @winner.write_safe("%KACHI\n#ILLEGAL_MOVE\n#WIN\n")
-    @loser.write_safe( "%KACHI\n#ILLEGAL_MOVE\n#LOSE\n")
+    @winner.write_safe("#ILLEGAL_MOVE\n#WIN\n")
+    @loser.write_safe( "#ILLEGAL_MOVE\n#LOSE\n")
     log(@result_type)
     log_summary
     notify

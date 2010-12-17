@@ -55,6 +55,7 @@ class HCKYBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 1
   end
 end
 
@@ -92,6 +93,7 @@ class HCKABoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 5
   end
 end
 
@@ -129,6 +131,7 @@ class HCHIBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 5
   end
 end
 
@@ -166,6 +169,7 @@ class HCHIKYBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 6
   end
 end
 
@@ -203,6 +207,7 @@ class HC2PBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 10
   end
 end
 
@@ -240,6 +245,7 @@ class HC4PBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 12
   end
 end
 
@@ -277,6 +283,7 @@ class HC6PBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 14
   end
 end
 
@@ -314,6 +321,7 @@ class HC8PBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 16
   end
 end
 
@@ -351,6 +359,7 @@ class HC10PBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 18
   end
 end
 
@@ -388,6 +397,7 @@ class HCTOMBOBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 8
   end
 end
 
@@ -425,6 +435,7 @@ class HCNAKEDBoard < Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = false
+    @gote_base_point = 27
   end
 end
 
@@ -465,6 +476,7 @@ class HCFU3Board < Board
       PieceFU::new(self, 0, 0, false)
     end
     @teban = false
+    @gote_base_point = 24
   end
 end
 

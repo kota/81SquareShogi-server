@@ -94,6 +94,7 @@ class Board
       PieceFU::new(self, i, 7, true)
     end
     @teban = true
+    @gote_base_point = 0
   end
 
   # Set up a board with the strs.
@@ -449,6 +450,7 @@ class Board
       hands = @sente_hands
       r = [1, 2, 3]
     else
+      point += @gote_base_point
       hands = @gote_hands
       r = [7, 8, 9]
     end
