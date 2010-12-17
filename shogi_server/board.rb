@@ -68,7 +68,7 @@ class Board
     PieceKE::new(self, 2, 1, false)
     PieceGI::new(self, 3, 1, false)
     PieceKI::new(self, 4, 1, false)
-    PieceOU::new(self, 5, 1, false)
+    @gote_ou = PieceOU::new(self, 5, 1, false)
     PieceKI::new(self, 6, 1, false)
     PieceGI::new(self, 7, 1, false)
     PieceKE::new(self, 8, 1, false)
@@ -83,7 +83,7 @@ class Board
     PieceKE::new(self, 2, 9, true)
     PieceGI::new(self, 3, 9, true)
     PieceKI::new(self, 4, 9, true)
-    PieceOU::new(self, 5, 9, true)
+    @sente_ou = PieceOU::new(self, 5, 9, true)
     PieceKI::new(self, 6, 9, true)
     PieceGI::new(self, 7, 9, true)
     PieceKE::new(self, 8, 9, true)
@@ -254,20 +254,25 @@ class Board
   end
 
   def look_for_ou(sente)
-    x = 1
-    while (x <= 9)
-      y = 1
-      while (y <= 9)
-        if (@array[x][y] &&
-            (@array[x][y].name == "OU") &&
-            (@array[x][y].sente == sente))
-          return @array[x][y]
-        end
-        y = y + 1
-      end
-      x = x + 1
+    if (sente) then
+      return @sente_ou
+    else
+      return @gote_ou
     end
-    raise "can't find ou"
+#    x = 1
+#    while (x <= 9)
+#      y = 1
+#      while (y <= 9)
+#        if (@array[x][y] &&
+#            (@array[x][y].name == "OU") &&
+#            (@array[x][y].sente == sente))
+#          return @array[x][y]
+#        end
+#        y = y + 1
+#      end
+#      x = x + 1
+#    end
+#    raise "can't find ou"
   end
 
   # not checkmate, but check. sente is checked.
@@ -619,8 +624,8 @@ class Board
       return "bishop_exchange"
     elsif (@move_count >= 17 && @move_count <= 24 && gote_hands.empty? && look_for_hi(true) == 2 && look_for_hi(false) == 8 &&
            (@array[8][8].to_s == "+KA" || @array[7][9].to_s == "+KA") &&
-           ((@array[7][7].to_s == "+GI" && look_for_ou(true).x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU")
-                                                                     || (@array[7][7].to_s == "+GI" && @array[7][8].to_s == "+KI" && @array[5][9].to_s == "+OU")))
+           ((@array[7][7].to_s == "+GI" && look_for_ou(true).x >= 6) || (@array[7][8].to_s == "+KI" && @array[6][9].to_s == "+OU") ||
+           (@array[7][7].to_s == "+GI" && @array[7][8].to_s == "+KI" && @array[5][9].to_s == "+OU")))
       return "yagura"
     elsif (@move_count == 16 && @move_count <= 24)
       if (look_for_hi(false) <= 5 && look_for_ou(false).x >= 5)
