@@ -165,6 +165,7 @@ class GameResultWin < GameResult
     @winner, @loser = winner, loser
     @winner.last_game_win = true
     @loser.last_game_win  = false
+    @result_type = (@black == @winner) ? "#SENTE_WIN" : "#GOTE_WIN"
   end
 
   def black_result
@@ -180,7 +181,7 @@ class GameResultAbnormalWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "abnormal"
-    @result_type      = "#DISCONNECT"
+    @result_type      = "#DISCONNECT\n" + @result_type
   end
 
   def process
@@ -196,7 +197,7 @@ class GameResultTimeoutWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "time up"
-    @result_type      = "#TIME_UP"
+    @result_type      = "#TIME_UP\n" + @result_type
   end
 
   def process
@@ -213,7 +214,7 @@ class GameResultKachiWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "kachi"
-    @result_type      = "#JISHOGI"
+    @result_type      = "#JISHOGI\n" + @result_type
   end
 
   def process
@@ -230,7 +231,7 @@ class GameResultIllegalKachiWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "illegal kachi"
-    @result_type      = "#ILLEGAL_MOVE"
+    @result_type      = "#ILLEGAL_MOVE\n" + @result_type
   end
 
   def process
@@ -246,7 +247,7 @@ class GameResultIllegalWin < GameResultWin
   def initialize(game, winner, loser, cause)
     super(game, winner, loser)
     @log_summary_type = cause
-    @result_type      = "#ILLEGAL_MOVE"
+    @result_type      = "#ILLEGAL_MOVE\n" + @result_type
   end
 
   def process
@@ -288,7 +289,7 @@ class GameResultToryoWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "toryo"
-    @result_type      = "#RESIGN"
+    @result_type      = "#RESIGN\n" + @result_type
   end
 
   def process
@@ -304,7 +305,7 @@ class GameResultOuteSennichiteWin < GameResultWin
   def initialize(game, winner, loser)
     super
     @log_summary_type = "oute_sennichite"
-    @result_type      = "#OUTE_SENNICHITE"
+    @result_type      = "#OUTE_SENNICHITE\n" + @result_type
   end
 
   def process
@@ -323,6 +324,7 @@ class GameResultDraw < GameResult
     super
     p1.last_game_win = false
     p2.last_game_win = false
+    @result_type = "#DRAW"
   end
   
   def black_result
@@ -338,7 +340,7 @@ class GameResultSennichiteDraw < GameResultDraw
   def initialize(game, p1, p2)
     super
     @log_summary_type = "sennichite"
-    @result_type      = "#SENNICHITE"
+    @result_type      = "#SENNICHITE\n" + @result_type
   end
 
   def process
