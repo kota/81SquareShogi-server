@@ -115,6 +115,7 @@ class BasicPlayer < ActiveResource::Base
     diff = ([[1,diff].max,31].min * c).round
     self.rate = self.rate + diff
     save
+    diff = (0.5 * diff).round if (provisional? && !loser.provisional?)
     loser.rate = loser.rate - diff
     loser.save
   end
