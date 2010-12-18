@@ -55,6 +55,8 @@ class Game
     @gote.game  = self
     @sente.opponent = @gote
     @gote.opponent = @sente
+    @sente_mouse_out = 0
+    @gote_mouse_out = 0
 
     @last_move = @board.initial_moves.empty? ? "" : "%s,T1" % [@board.initial_moves.last]
     @current_turn = @board.initial_moves.size
@@ -89,7 +91,7 @@ class Game
     propose
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
-  attr_accessor :last_move, :current_turn
+  attr_accessor :last_move, :current_turn, :sente_mouse_out, :gote_mouse_out
   attr_reader   :result, :prepared_time, :kifu, :status, :end_time, :opening
 
   # Path of a log file for this game.
@@ -332,6 +334,9 @@ class Game
     @kifu.contents += "N-#{@gote.name}\n"
     @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
+
+    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code}\n"
+    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code}\n"
 
     @sente.write_safe(propose_message("+"))
     @gote.write_safe(propose_message("-"))

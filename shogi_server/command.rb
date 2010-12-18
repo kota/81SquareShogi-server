@@ -712,6 +712,13 @@ module ShogiServer
 
     def call
       if (@game)
+        if (@message =~ /^\[##M_OUT\]/)
+          if (@game.sente && @game.sente == @player)
+            @game.sente_mouse_out += 1
+          elsif (@game.gote && @game.gote == @player)
+            @game.gote_mouse_out += 1
+          end
+        end
         res = sprintf("##[GAMECHAT][%s] %s\n", @player.name, @message)
         if (@game.sente && @game.sente.game == @game)
           if (!(@game.game_name =~ /^r_/) || @game.sente.status == "post_game" || @player == @game.sente || @player == @game.gote)

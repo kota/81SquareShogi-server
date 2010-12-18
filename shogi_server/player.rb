@@ -79,6 +79,10 @@ class BasicPlayer < ActiveResource::Base
     @player_id != nil
   end
 
+  def provisional?
+    return (wins + losses < 10)
+  end
+
   def last_game_win?
     return @last_game_win
   end

@@ -143,11 +143,17 @@ class GameResult
 
   def log_summary
     log_board
-    log("'summary:%s:%s %s:%s %s:%d:%s" % [@log_summary_type, 
+    log("'summary:%s:%s %s:%s %s:%d:%s:%s,%d,%d:%s,%d,%d" % [@log_summary_type, 
                                         @black.name, black_result,
                                         @white.name, white_result,
                                         @game.current_turn,
-                                        @game.opening])
+                                        @game.opening,
+                                        (@black.provisional? ? '*' : '') + @black.rate.to_s,
+                                        @black.country_code,
+                                        @game.sente_mouse_out,
+                                        (@white.provisional? ? '*' : '') + @white.rate.to_s,
+                                        @white.country_code,
+                                        @game.gote_mouse_out])
   end
 end
 
