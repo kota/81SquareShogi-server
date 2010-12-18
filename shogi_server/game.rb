@@ -316,11 +316,12 @@ class Game
   end
 
   def start
+    @kifu.save
     log_message(sprintf("game started %s", @game_id))
     @sente.status = "game"
     @gote.status  = "game"
-    @sente.write_safe(sprintf("START:%s\n", @game_id))
-    @gote.write_safe(sprintf("START:%s\n", @game_id))
+    @sente.write_safe(sprintf("START:%s:%d\n", @game_id, @kifu.id))
+    @gote.write_safe(sprintf("START:%s:%d\n", @game_id, @kifu.id))
     @sente.mytime = @total_time
     @gote.mytime = @total_time
     @start_time = Time::new

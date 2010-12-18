@@ -419,7 +419,7 @@ module ShogiServer
         @game.monitoron(monitor_handler)
         @player.monitor_game = @game
         since_last_move = sprintf("$SINCE_LAST_MOVE:%d", Time::new - @game.end_time)
-        monitor_handler.write_safe(@game_id, @game.kifu.contents.chomp + "\n" + since_last_move)
+        monitor_handler.write_safe(game.kifu.id, @game.kifu.contents.chomp + "\n" + since_last_move)
         @game.sente.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
         @game.gote.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
         @game.each_monitor { |monitor_handler|
