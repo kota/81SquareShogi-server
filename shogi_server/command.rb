@@ -34,6 +34,21 @@ module ShogiServer
         cmd = MoveCommand.new(str, player)
       when /^%[^%]/, :timeout, /^%%%TIMEOUT/
         cmd = SpecialCommand.new(str, player)
+      when /^%%CHAT\s+(.+)/
+        message = $1
+        cmd = ChatCommand.new(str, player, message, $league.players)
+      when /^%%PRIVATECHAT\s+(\S+)\s+(.+)/
+        sendto = $1
+        message = $2
+        cmd = PrivateChatCommand.new(str, player, message, $league.find(sendto))
+      when /^%%GAMECHAT\s+(\S+)\s+(.+)/
+        game_id = $1
+        message = $2
+        cmd = GameChatCommand.new(str, player, $league.games[game_id], message)
+      when /^%%LIST/
+        cmd = ListCommand.new(str, player, $league.games)
+      when /^%%WHO/
+        cmd = WhoCommand.new(str, player, $league.players)
       when :exception
         cmd = ExceptionCommand.new(str, player)
       when /^REJECT/
@@ -64,6 +79,9 @@ module ShogiServer
         cmd = HelpCommand.new(str, player)
       when /^%%RATING/
         cmd = RatingCommand.new(str, player, $league.rated_players)
+      when /^%%SETRATE\s+(\d*)/
+        new_rate = $1
+        cmd = SetRateCommand.new(str, player, new_rate)
       when /^%%VERSION/
         cmd = VersionCommand.new(str, player)
       when /^%%GAME\s*$/
@@ -74,21 +92,6 @@ module ShogiServer
         my_sente_str = $3
         cmd = GameChallengeCommand.new(str, player, 
                                        command_name, game_name, my_sente_str)
-      when /^%%CHAT\s+(.+)/
-        message = $1
-        cmd = ChatCommand.new(str, player, message, $league.players)
-      when /^%%PRIVATECHAT\s+(\S+)\s+(.+)/
-        sendto = $1
-        message = $2
-        cmd = PrivateChatCommand.new(str, player, message, $league.find(sendto))
-      when /^%%GAMECHAT\s+(\S+)\s+(.+)/
-        game_id = $1
-        message = $2
-        cmd = GameChatCommand.new(str, player, $league.games[game_id], message)
-      when /^%%LIST/
-        cmd = ListCommand.new(str, player, $league.games)
-      when /^%%WHO/
-        cmd = WhoCommand.new(str, player, $league.players)
       when /^LOGOUT/
         cmd = LogoutCommand.new(str, player)
       when /^CHALLENGE/
@@ -497,6 +500,26 @@ module ShogiServer
                    [p.simple_player_id, p.rate, p.modified_at.strftime("%Y-%m-%d")])
       end
       @player.write_safe("##[RATING] +OK\n")
+      return :continue
+    end
+  end
+
+  # Command of SETRATE
+  #
+  class SetRateCommand < Command
+    def initialize(str, player, new_rate)
+      super(str, player)
+      @new_rate = new_rate
+    end
+
+    def call
+      if (@player.provisional?)
+        @player.rate = @new_rate
+        @player.save
+        @player.write_safe("##[SETRATE] +OK\n")
+      else
+        @player.write_safe("##[ERROR] Your rate is not provisional.\n")
+      end
       return :continue
     end
   end
