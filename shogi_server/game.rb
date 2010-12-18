@@ -178,7 +178,7 @@ class Game
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
-    if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/)
+    if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/ && @current_turn > 3)
       @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
       @result.winner.update_count(true)
       @result.loser.update_count(false)
