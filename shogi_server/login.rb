@@ -62,6 +62,8 @@ class Login
       ret = HCHIBoard
     when %r!^hcrooklance_!
       ret = HCHIKYBoard
+    when %r!^hcrooksilver_!
+      ret = HCHIGIBoard
     when %r!^hc2p_!
       ret = HC2PBoard
     when %r!^hc4p_!

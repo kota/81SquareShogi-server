@@ -89,6 +89,7 @@ class Game
     @opening = "*"
 
     propose
+    @kifu.save
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn, :sente_mouse_out, :gote_mouse_out
@@ -316,7 +317,6 @@ class Game
   end
 
   def start
-    @kifu.save
     log_message(sprintf("game started %s", @game_id))
     @sente.status = "game"
     @gote.status  = "game"
