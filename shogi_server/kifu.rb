@@ -4,7 +4,7 @@ require 'active_resource'
 module ShogiServer # for a namespace
 
 class Kifu < ActiveResource::Base
-  self.site = 'http://localhost:3000'
+  self.site = 'http://localhost'
   self.prefix = '/api/'
 end # class
 
