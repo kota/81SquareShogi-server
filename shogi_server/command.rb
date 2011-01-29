@@ -80,7 +80,7 @@ module ShogiServer
       when /^%%RATING/
         cmd = RatingCommand.new(str, player, $league.rated_players)
       when /^%%SETRATE\s+(\d*)/
-        new_rate = $1
+        new_rate = $1.to_i
         cmd = SetRateCommand.new(str, player, new_rate)
       when /^%%VERSION/
         cmd = VersionCommand.new(str, player)
