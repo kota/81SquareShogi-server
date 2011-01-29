@@ -264,7 +264,6 @@ def login_loop(client)
         if player = ShogiServer::Player.find(:one,:from => :with_login,:params => {:login => str.split[1]})
           player.init(str,client,eol)
           login  = ShogiServer::Login::factory(str, player)
-          log_message(sprintf("PASSWORD = %s", player.password))
           if player.authenticated?(player.password)
             if (current_player = $league.find(player.name))
               if (current_player.password == player.password &&
