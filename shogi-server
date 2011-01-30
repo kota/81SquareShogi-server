@@ -326,6 +326,12 @@ def main
   log_file = $options["daemon"] ? File.join($options["daemon"], "shogi-server.log") : STDOUT
   $logger = setup_logger(log_file)
 
+  $server = ShogiServer::Server.find(:one, :from => :with_name, :params => {:name => $league.event})
+  $server.population = 0
+  $server.started_at = Time.now
+  $server.maintenance_at = nil
+  $server.save
+
   $league.dir = $topdir
 
   config = {}
@@ -388,6 +394,11 @@ def main
       ensure
         $mutex.unlock
       end
+  end
+ensure
+  if ($server)
+    $server.population = -1
+    $server.save
   end
 end
 
