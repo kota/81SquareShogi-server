@@ -120,6 +120,8 @@ class Login
                                @player.name, @player.rate, @player.country_code,
                                @player.wins, @player.losses, @player.streak, @player.streak_best))
     log_message(sprintf("user %s run in %s mode", @player.name, @player.protocol))
+    $server.population = $league.players.length
+    $server.save
   end
 
   def incorrect_duplicated_player(str)
