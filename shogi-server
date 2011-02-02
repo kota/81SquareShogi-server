@@ -327,10 +327,7 @@ def main
   $logger = setup_logger(log_file)
 
   $server = ShogiServer::Server.find(:one, :from => :with_name, :params => {:name => $league.event})
-  $server.population = 0
-  $server.started_at = Time.now
-  $server.maintenance_at = nil
-  $server.save
+  $server.start_log
 
   $league.dir = $topdir
 
@@ -383,6 +380,7 @@ def main
       next unless player
 
       log_message(sprintf("user %s login", player.name))
+      $server.write_population($league.players.length)
       login.process
       player.setup_logger($options["player-log-dir"]) if $options["player-log-dir"]
       player.run(login.csa_1st_str) # loop
@@ -391,15 +389,13 @@ def main
         player.kill2
         $league.delete(player)
         log_message(sprintf("user %s logout", player.name))
+        $server.write_population($league.players.length)
       ensure
         $mutex.unlock
       end
   end
 ensure
-  if ($server)
-    $server.population = -1
-    $server.save
-  end
+  $server.write_population(-1) if ($server)
 end
 
 
