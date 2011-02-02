@@ -191,26 +191,24 @@ class Player < BasicPlayer
     log_error("#{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}")
   end
 
-  def kill
-    log_message(sprintf("user %s killed", @name))
-    if (@game)
-      @game.kill(self)
-    end
-    if (@monitor_game)
-      @monitor_game.monitoroff(MonitorHandler2.new(self))
-    end
-    finish
+  def override
+    kill
     Thread::kill(@main_thread)  if @main_thread
     Thread::kill(@write_thread) if @write_thread
   end
   
-  def kill2
+  def kill
     log_message(sprintf("user %s killed", @name))
     if (@game && @game.status != "closed")
       @game.kill(self)
     end
     if (@monitor_game)
       @monitor_game.monitoroff(MonitorHandler2.new(self))
+      @monitor_game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @name)) if (@monitor_game.sente && @monitor_game.sente.game == @monitor_game)
+      @monitor_game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @name)) if (@monitor_game.gote && @monitor_game.gote.game == @monitor_game)
+      @monitor_game.each_monitor { |monitor_handler|
+        monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @name))
+      }
     end
     finish
   end

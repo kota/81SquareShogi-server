@@ -854,7 +854,7 @@ module ShogiServer
 
     def call
       if (@ghost_player)
-        @ghost_player.kill2
+        @ghost_player.kill
         $league.delete(@ghost_player)
         log_info("Ghost of #{@ghost_player.name} was killed by #{@player.name}")
         @player.write_safe("You killed %s. (It is logged.)\n" % [@ghost_player.name])

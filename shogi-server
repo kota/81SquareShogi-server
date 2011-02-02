@@ -269,7 +269,7 @@ def login_loop(client)
               if (current_player.password == player.password &&
                 current_player.status != "game")
                 log_message(sprintf("user %s login forcely", player.name))
-                current_player.kill
+                current_player.override
               else
                 login.incorrect_duplicated_player(str)
                 player = nil
@@ -386,7 +386,7 @@ def main
       player.run(login.csa_1st_str) # loop
       $mutex.lock
       begin
-        player.kill2
+        player.kill
         $league.delete(player)
         log_message(sprintf("user %s logout", player.name))
         $server.write_population($league.players.length)

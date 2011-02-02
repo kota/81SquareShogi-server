@@ -166,6 +166,12 @@ class Game
     killer.status = "connected"
     if (is_closable_status?)
       close
+    else
+      @sente.write_safe(sprintf("##[LEAVE][%s]\n", killer.name)) if (@sente.game == self)
+      @gote.write_safe(sprintf("##[LEAVE][%s]\n", killer.name)) if (@gote.game == self)
+      each_monitor { |monitor_handler|
+        monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", killer.name))
+      }
     end
   end
 
