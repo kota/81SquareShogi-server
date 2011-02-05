@@ -266,8 +266,7 @@ def login_loop(client)
           login  = ShogiServer::Login::factory(str, player)
           if player.authenticated?(player.password)
             if (current_player = $league.find(player.name))
-              if (current_player.password == player.password &&
-                current_player.status != "game")
+              if (current_player.password == player.password)
                 log_message(sprintf("user %s login forcely", player.name))
                 current_player.override
               else
