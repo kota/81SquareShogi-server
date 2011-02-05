@@ -96,6 +96,11 @@ module ShogiServer
         cmd = LogoutCommand.new(str, player)
       when /^CHALLENGE/
         cmd = ChallengeCommand.new(str, player)
+      when /^%%RECONNECT\s+(\S+)/
+        game_id = $1
+        cmd = ReconnectCommand.new(str, player, $league.games[game_id])
+      when /^%%%DECLARE/
+        cmd = DeclareCommand.new(str, player)
       when /^%%GHOST\s+(\S+)/
         ghost = $1
         cmd = KillGhostCommand.new(str, player, $league.find(ghost), $league.games[ghost])
@@ -270,7 +275,7 @@ module ShogiServer
     end
   end
   
-  # Command of CLOSE
+  # Command of CLOSE to leave game, Extended functionality for 81 dojo.
   #
   class CloseCommand < Command
     def initialize(str, player)
@@ -448,6 +453,48 @@ module ShogiServer
       return :continue
     end
 
+  end
+
+  class ReconnectHandler < MonitorHandler
+    def initialize(player)
+      super
+      @type = 3
+      @header = "RECONNECT"
+    end
+  end
+
+  # Command of Game Reconnect. Extended functionality for 81 dojo.
+  #
+  class ReconnectCommand < BaseCommandForGame
+    def initialize(str, player, game)
+      super
+    end
+
+    def call
+      if (@game && @game.status != "closed")
+        if (@game.reconnect(@player))
+          reconnect_handler = ReconnectHandler.new(@player)
+          since_last_move = sprintf("$SINCE_LAST_MOVE:%d", Time::new - @game.end_time)
+          reconnect_handler.write_safe(@game.kifu.id, @game.kifu.contents.chomp + "\n" + since_last_move)
+        end
+      end
+      return :continue
+    end
+  end
+
+  # Command of Declarre Win when opponent disconnected. Extended functionality for 81 dojo.
+  #
+  class DeclareCommand < Command
+    def initialize(str, player)
+      super
+    end
+
+    def call
+      if (@player.status == "game")
+        @player.game.declare(@player)
+      end
+      return :continue
+    end
   end
 
   # Command of Watchers. Extended functionality for 81 dojo.
@@ -704,7 +751,7 @@ module ShogiServer
     end
   end
 
-  # Command of PRIVATECHAT
+  # Command of PRIVATECHAT, Extended functionality for 81 dojo.
   #
   class PrivateChatCommand < Command
 
@@ -724,7 +771,7 @@ module ShogiServer
     end
   end
 
-  # Command of GAMECHAT
+  # Command of GAMECHAT, Extended functionality for 81 dojo.
   #
   class GameChatCommand < BaseCommandForGame
 

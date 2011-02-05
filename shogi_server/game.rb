@@ -142,7 +142,7 @@ class Game
     close
   end
 
-  def kill(killer)
+  def disconnect(killer)
     [@sente, @gote].each do |player|
       if ["agree_waiting", "start_waiting"].include?(player.status)
         reject(killer.name)
@@ -150,16 +150,12 @@ class Game
       end
     end
     
-    if (@current_player == killer)
-      @result = GameResultAbnormalWin.new(self, @next_player, @current_player)
+    if (killer.opponent.game != self && !@result)
+      @result = GameResultDisconnectDraw.new(self, @next_player, @current_player)
       @result.process
       finish
     end
-    if (@next_player == killer)
-      @result = GameResultAbnormalWin.new(self, @current_player, @next_player)
-      @result.process
-      finish
-    end
+
     killer.game = nil
     killer.game_name = ""
     killer.opponent = nil
@@ -167,11 +163,55 @@ class Game
     if (is_closable_status?)
       close
     else
-      @sente.write_safe(sprintf("##[LEAVE][%s]\n", killer.name)) if (@sente.game == self)
-      @gote.write_safe(sprintf("##[LEAVE][%s]\n", killer.name)) if (@gote.game == self)
+      @sente.write_safe(sprintf("##[DISCONNECT][%s]\n", killer.name)) if (@sente.game == self)
+      @gote.write_safe(sprintf("##[DISCONNECT][%s]\n", killer.name)) if (@gote.game == self)
       each_monitor { |monitor_handler|
-        monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", killer.name))
+        monitor_handler.player.write_safe(sprintf("##[DISCONNECT][%s]\n", killer.name))
       }
+    end
+  end
+
+  def reconnect(killer)
+    if (killer == @sente && @sente.game != self)
+      killer.mytime = @sente.mytime
+      @sente = killer
+      killer.sente = true
+      killer.opponent = @gote
+      @gote.opponent = killer
+      @gote.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@gote.game == self)
+    elsif (killer == @gote && @gote.game != self)
+      killer.mytime = @gote.mytime
+      @gote = killer
+      killer.sente = false
+      killer.opponent = @sente
+      @sente.opponent = killer
+      @sente.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@sente.game == self)
+    else
+      return false
+    end
+    killer.game = self
+    killer.game_name = @game_name
+    if (@current_player == killer.opponent)
+      @next_player = killer
+    else
+      @current_player = killer
+    end
+    if (@status == "game")
+      killer.status = "game"
+    elsif (@status == "finished")
+      killer.status = "post_game"
+    end
+    each_monitor { |monitor_handler|
+      monitor_handler.player.write_safe(sprintf("##[ENTER][%s]\n", killer.name))
+    }
+    return true
+  end
+
+  def declare(winner)
+    if (@status == "game" && winner.opponent.game != self)
+      @result = GameResultAbnormalWin.new(self, winner, winner.opponent)
+      @result.process
+      finish
     end
   end
 
@@ -271,9 +311,7 @@ class Game
     end
 
     @result = nil
-    if (@next_player.status != "game") # rival is logout or disconnected
-      @result = GameResultAbnormalWin.new(self, @current_player, @next_player)
-    elsif (status == :timeout)
+    if (status == :timeout)
       # current_player losed
       @result = GameResultTimeoutWin.new(self, @next_player, @current_player)
     elsif (move_status == :illegal)

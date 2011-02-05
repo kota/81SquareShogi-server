@@ -200,7 +200,7 @@ class Player < BasicPlayer
   def kill
     log_message(sprintf("user %s killed", @name))
     if (@game && @game.status != "closed")
-      @game.kill(self)
+      @game.disconnect(self)
     end
     if (@monitor_game)
       @monitor_game.monitoroff(MonitorHandler2.new(self))

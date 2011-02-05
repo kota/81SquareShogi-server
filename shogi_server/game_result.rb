@@ -347,7 +347,21 @@ class GameResultSennichiteDraw < GameResultDraw
     @players.each do |player|
       player.write_safe("#SENNICHITE\n#DRAW\n")
     end
-    # no log
+    log(@result_type)
+    log_summary
+    notify
+  end
+end
+
+class GameResultDisconnectDraw < GameResultDraw
+  def initialize(game, p1, p2)
+    super
+    @log_summary_type = "disconnect"
+    @result_type      = "#DISCONNECT\n" + @result_type
+  end
+
+  def process
+    log(@result_type)
     log_summary
     notify
   end
