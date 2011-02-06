@@ -40,7 +40,7 @@ module ShogiServer
       when /^%%PRIVATECHAT\s+(\S+)\s+(.+)/
         sendto = $1
         message = $2
-        cmd = PrivateChatCommand.new(str, player, message, $league.find(sendto))
+        cmd = PrivateChatCommand.new(str, player, message, sendto)
       when /^%%GAMECHAT\s+(\S+)\s+(.+)/
         game_id = $1
         message = $2
@@ -763,14 +763,20 @@ module ShogiServer
     def initialize(str, player, message, sendto)
       super(str, player)
       @message = message
-      @sendto = sendto
+      unless (@sendto = $league.find(sendto))
+        if $offline_message.include?(sendto.downcase)
+          $offline_message[sendto.downcase] += sprintf("[%s](%s)%s\n", player.name, Time.now.gmtime.strftime("%b %d %H:%M UTC"), message)
+        else
+          $offline_message[sendto.downcase] = sprintf("[%s](%s)%s\n", player.name, Time.now.gmtime.strftime("%b %d %H:%M UTC"), message)
+        end
+      end
     end
 
     def call
       if (@sendto)
         @sendto.write_safe(sprintf("##[PRIVATECHAT][%s] %s\n", @player.name, @message))
       else
-        @player.write_safe(sprintf("##[PRIVATECHAT][#ERROR] *\n"))
+        @player.write_safe(sprintf("##[PRIVATECHAT][#ERROR] Player not found online. Message is saved.\n"))
       end
       return :continue
     end

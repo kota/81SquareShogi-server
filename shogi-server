@@ -328,6 +328,8 @@ def main
   $server = ShogiServer::Server.find(:one, :from => :with_name, :params => {:name => $league.event})
   $server.start_log
 
+  $offline_message = Hash::new
+
   $league.dir = $topdir
 
   config = {}

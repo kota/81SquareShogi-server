@@ -181,6 +181,13 @@ class Loginx1 < Login
   def process
     super
     @player.write_safe(sprintf("##[LOGIN] +OK %s\n", PROTOCOL))
+    if ($offline_message.include?(@player.name.downcase))
+      $offline_message[@player.name.downcase].chomp.split("\n").each do |line|
+        @player.write_safe("##[OFFLINE_PM]%s\n" % [line.chomp])
+      end
+      @player.write_safe("##[OFFLINE_PM] +OK\n")
+      $offline_message.delete(@player.name.downcase)
+    end
   end
 end
 
