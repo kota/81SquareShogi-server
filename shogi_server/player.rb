@@ -202,6 +202,13 @@ class Player < BasicPlayer
     if (@game && @game.status != "closed")
       @game.disconnect(self)
     end
+    if ["connected", "game_waiting"].include?(@status)
+      if (@opponent && @opponent.opponent == self)
+        @opponent.opponent = nil if ["connected", "game_waiting"].include?(@opponent.status)
+        @opponent.write_safe("##[DECLINE]Opponent disconnected.\n")
+        @opponent = nil
+      end
+    end
     if (@monitor_game)
       @monitor_game.monitoroff(MonitorHandler2.new(self))
       @monitor_game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @name)) if (@monitor_game.sente && @monitor_game.sente.game == @monitor_game)

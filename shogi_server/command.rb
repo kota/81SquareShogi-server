@@ -49,17 +49,30 @@ module ShogiServer
         cmd = ListCommand.new(str, player, $league.games)
       when /^%%WHO/
         cmd = WhoCommand.new(str, player, $league.players)
-      when :exception
-        cmd = ExceptionCommand.new(str, player)
+      when /^%%%WATCHERS\s+(\S+)/
+        game_id = $1
+        cmd = WatchersCommand.new(str, player, $league.games[game_id])
+      when /^%%CHALLENGE\s+(\S+)/
+        sendto = $1
+        cmd = ChallengeCommand.new(str, player, $league.find(sendto))
+      when /^ACCEPT/
+        cmd = AcceptCommand.new(str, player)
+      when /^DECLINE/
+        cmd = DeclineCommand.new(str, player)
       when /^REJECT/
         cmd = RejectCommand.new(str, player)
       when /^AGREE/
         cmd = AgreeCommand.new(str, player)
       when /^CLOSE/
         cmd = CloseCommand.new(str, player)
-      when /^%%SHOW\s+(\S+)/
-        game_id = $1
-        cmd = ShowCommand.new(str, player, $league.games[game_id])
+      when /^%%GAME\s*$/
+        cmd = GameCommand.new(str, player)
+      when /^%%(GAME|SEEK)\s+(\S+)\s+([\+\-\*])\s*$/
+        command_name = $1
+        game_name = $2
+        my_sente_str = $3
+        cmd = GameSeekCommand.new(str, player, 
+                                  command_name, game_name, my_sente_str)
       when /^%%MONITORON\s+(\S+)/
         game_id = $1
         cmd = MonitorOnCommand.new(str, player, $league.games[game_id])
@@ -72,9 +85,9 @@ module ShogiServer
       when /^%%MONITOR2OFF\s+(\S+)/
         game_id = $1
         cmd = Monitor2OffCommand.new(str, player, $league.games[game_id])
-      when /^%%%WATCHERS\s+(\S+)/
+      when /^%%SHOW\s+(\S+)/
         game_id = $1
-        cmd = WatchersCommand.new(str, player, $league.games[game_id])
+        cmd = ShowCommand.new(str, player, $league.games[game_id])
       when /^%%HELP/
         cmd = HelpCommand.new(str, player)
       when /^%%RATING/
@@ -84,18 +97,8 @@ module ShogiServer
         cmd = SetRateCommand.new(str, player, new_rate)
       when /^%%VERSION/
         cmd = VersionCommand.new(str, player)
-      when /^%%GAME\s*$/
-        cmd = GameCommand.new(str, player)
-      when /^%%(GAME|CHALLENGE)\s+(\S+)\s+([\+\-\*])\s*$/
-        command_name = $1
-        game_name = $2
-        my_sente_str = $3
-        cmd = GameChallengeCommand.new(str, player, 
-                                       command_name, game_name, my_sente_str)
       when /^LOGOUT/
         cmd = LogoutCommand.new(str, player)
-      when /^CHALLENGE/
-        cmd = ChallengeCommand.new(str, player)
       when /^%%RECONNECT\s+(\S+)/
         game_id = $1
         cmd = ReconnectCommand.new(str, player, $league.games[game_id])
@@ -118,6 +121,8 @@ module ShogiServer
       when /^%%GETBUOYCOUNT\s+(\S+)/
         game_name = $1
         cmd = GetBuoyCountCommand.new(str, player, game_name)
+      when :exception
+        cmd = ExceptionCommand.new(str, player)
       when /^\s*$/
         cmd = SpaceCommand.new(str, player)
       else
@@ -603,10 +608,10 @@ module ShogiServer
     end
   end
 
-  # Commando of game challenge
+  # Commando of GAME & SEEK, Altered functionality for 81-Dojo
   # TODO make a test case
   #
-  class GameChallengeCommand < Command
+  class GameSeekCommand < Command
     def initialize(str, player, command_name, game_name, my_sente_str)
       super(str, player)
       @command_name = command_name
@@ -718,8 +723,8 @@ module ShogiServer
           else
             @player.sente = nil
           end
-        else                # challenge
-          @player.write_safe(sprintf("##[ERROR] can't find rival for %s\n", @game_name))
+        else                # seek
+          @player.write_safe("##[DECLINE]Error: Opponent's game rule is changed.\n")
           @player.status = "connected"
           @player.game_name = ""
           @player.sente = nil
@@ -877,17 +882,56 @@ module ShogiServer
     end
   end
 
-  # Command of CHALLENGE
+  # Command of CHALLENGE, Altered functionality for 81-Dojo
   #
   class ChallengeCommand < Command
+    def initialize(str, player, sendto)
+      super(str, player)
+      @sendto = sendto
+    end
+
+    def call
+      if (!@player.opponent && @sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
+        @player.opponent = @sendto
+        @sendto.opponent = @player
+        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : ""])
+      else
+        @player.write_safe("##[DECLINE]Opponent not in challengable status.\n")
+      end
+      return :continue
+    end
+  end
+
+  # Command of ACCEPT, Extended functionality for 81-Dojo
+  #
+  class AcceptCommand < Command
     def initialize(str, player)
       super
     end
 
     def call
-      # This command is only available for CSA's official testing server.
-      # So, this means nothing for this program.
-      @player.write_safe("CHALLENGE ACCEPTED\n")
+      if (@player.opponent && @player.opponent.opponent == @player)
+        @player.opponent.write_safe("##[ACCEPT]Challenge Accepted.\n")
+        @player.opponent.opponent = nil
+        @player.opponent = nil
+      end
+      return :continue
+    end
+  end
+
+  # Command of DECLINE, Extended functionality for 81-Dojo
+  #
+  class DeclineCommand < Command
+    def initialize(str, player)
+      super
+    end
+
+    def call
+      if (@player.opponent && @player.opponent.opponent == @player)
+        @player.opponent.write_safe("##[DECLINE]Declined by opponent.\n")
+        @player.opponent.opponent = nil
+        @player.opponent = nil
+      end
       return :continue
     end
   end
