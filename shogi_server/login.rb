@@ -119,7 +119,7 @@ class Login
     @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d OK\n",
                                @player.name, @player.rate, @player.country_code,
                                @player.wins, @player.losses, @player.streak, @player.streak_best))
-    log_message(sprintf("user %s run in %s mode", @player.name, @player.protocol))
+    log_message(sprintf("user %s(%s) run in %s mode", @player.name, @player.socket.peeraddr[2], @player.protocol))
   end
 
   def incorrect_duplicated_player(str)
