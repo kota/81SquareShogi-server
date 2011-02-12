@@ -104,6 +104,9 @@ module ShogiServer
         cmd = ReconnectCommand.new(str, player, $league.games[game_id])
       when /^%%%DECLARE/
         cmd = DeclareCommand.new(str, player)
+      when /^%%MAINTENANCE\s+(\d*)/
+        minutes = $1.to_i
+        cmd = MaintenanceCommand.new(str, player, minutes)
       when /^%%GHOST\s+(\S+)/
         ghost = $1
         cmd = KillGhostCommand.new(str, player, $league.find(ghost), $league.games[ghost])
@@ -556,7 +559,7 @@ module ShogiServer
     end
   end
 
-  # Command of SETRATE
+  # Command of SETRATE, Extended functionality of 81-Dojo
   #
   class SetRateCommand < Command
     def initialize(str, player, new_rate)
@@ -897,6 +900,12 @@ module ShogiServer
     end
 
     def call
+      if ($server)
+        if ($server.maintenance_at && Time.now > $server.maintenance_at)
+          @player.write_safe("##[DECLINE]Server maintenance time. Cannot challenge.\n")
+          return :continue
+        end
+      end
       if (!@player.opponent && @sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
         @player.opponent = @sendto
         @sendto.opponent = @player
@@ -937,6 +946,28 @@ module ShogiServer
         @player.opponent.write_safe("##[DECLINE]Declined by opponent.\n")
         @player.opponent.opponent = nil
         @player.opponent = nil
+      end
+      return :continue
+    end
+  end
+
+  # Command of MAINTENANCE, Extended functionality of 81-Dojo
+  #
+  class MaintenanceCommand < Command
+    def initialize(str, player, minutes)
+      super(str, player)
+      @minutes = minutes
+    end
+
+    def call
+      if ($server)
+        if (@minutes > 0)
+          $server.maintenance_at = Time.now + @minutes*60
+        else
+          $server.maintenance_at = nil
+        end
+      else
+        @player.write_safe("##[ERROR] Could not set maintenance time.\n")
       end
       return :continue
     end
