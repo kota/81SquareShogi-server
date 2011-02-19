@@ -351,7 +351,8 @@ class Player < BasicPlayer
 
         delay = Time.now - time
         if delay > 5
-          log_warning("Detected a long delay: %.2f sec" % [delay])
+          log_warning("Detected a long delay for %s: %.2f sec" % [@name, delay])
+          @game.compensate_delay(delay) if (@game && @game.turn?(self))
         end
         cmd = ShogiServer::Command.factory(str, self, time)
         case cmd.call

@@ -347,6 +347,11 @@ class Game
     return finish_flag
   end
 
+  def compensate_delay(delay)
+    @current_player.mytime += delay
+    log_message(sprintf("Gave additional thinking time of %d to %s", delay, @current_player.name))
+  end
+
   def is_startable_status?
     return (@sente && @gote &&
             (@sente.status == "start_waiting") &&
