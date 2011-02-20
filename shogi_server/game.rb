@@ -348,7 +348,7 @@ class Game
   end
 
   def compensate_delay(delay)
-    @current_player.mytime += delay
+    @start_time += delay
     log_message(sprintf("Gave additional thinking time of %d to %s", delay, @current_player.name))
   end
 
