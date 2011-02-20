@@ -518,5 +518,28 @@ class HCFU3Board < Board
   end
 end
 
+# Board for Mini-shogi.
+#
+class MiniBoard < Board
+  def initial
+    @gote_ou = PieceOU::new(self, 3, 3, false)
+    PieceKI::new(self, 4, 3, false)
+    PieceGI::new(self, 5, 3, false)
+    PieceKA::new(self, 6, 3, false)
+    PieceHI::new(self, 7, 3, false)
+    PieceFU::new(self, 3, 4, false)
+
+    @sente_ou = PieceOU::new(self, 7, 7, true)
+    PieceKI::new(self, 6, 7, true)
+    PieceGI::new(self, 5, 7, true)
+    PieceKA::new(self, 4, 7, true)
+    PieceHI::new(self, 3, 7, true)
+    PieceFU::new(self, 7, 6, true)
+
+    @teban = true
+    @gote_base_point = 0
+  end
+end
+
 end # ShogiServer
 

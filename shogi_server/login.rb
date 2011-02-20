@@ -80,6 +80,8 @@ class Login
       ret = HCFU3Board
     when %r!^hcnaked_!
       ret = HCNAKEDBoard
+    when %r!^mini_!
+      ret = MiniBoard
     else
       ret = false
     end
