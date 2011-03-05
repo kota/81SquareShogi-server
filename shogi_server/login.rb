@@ -183,6 +183,11 @@ class Loginx1 < Login
   def process
     super
     @player.write_safe(sprintf("##[LOGIN] +OK %s\n", PROTOCOL))
+    res = sprintf("##[LOBBY_IN]%s,%d,%s,%d,%d,%d,%d,%d\n", @player.name, @player.rate, @player.provisional?, @player.country_code,
+                                                        @player.wins, @player.losses, @player.streak, @player.streak_best)
+    $league.players.each do |name, p|
+      p.write_safe(res)
+    end
     if ($offline_message.include?(@player.name.downcase))
       $offline_message[@player.name.downcase].chomp.split("\n").each do |line|
         @player.write_safe("##[OFFLINE_PM]%s\n" % [line.chomp])

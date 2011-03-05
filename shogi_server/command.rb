@@ -750,9 +750,10 @@ module ShogiServer
     end
 
     def call
+      res = sprintf("##[CHAT][%s] %s\n", @player.name, @message)
       @players.each do |name, p| # TODO player change name
         if (p.protocol != LoginCSA::PROTOCOL)
-          p.write_safe(sprintf("##[CHAT][%s] %s\n", @player.name, @message)) 
+          p.write_safe(res)
         end
       end
       return :continue
