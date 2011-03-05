@@ -24,7 +24,7 @@ require 'active_resource'
 module ShogiServer # for a namespace
 
 class BasicPlayer < ActiveResource::Base
-  self.site = 'http://localhost'
+  self.site = 'http://localhost:3000'
   self.prefix = '/api/'
 
   # Idetifier of the player in the rating system
