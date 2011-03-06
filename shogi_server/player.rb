@@ -200,7 +200,7 @@ class Player < BasicPlayer
   def kill
     log_message(sprintf("user %s killed", @name))
     if (!@game && !@monitor_game)
-      res = sprintf("##[LOBBY_OUT]%s\n", @name)
+      res = sprintf("##[LOBBY_OUT]%s\n", name)
       $league.players.each do |name, p|
         p.write_safe(res)
       end
