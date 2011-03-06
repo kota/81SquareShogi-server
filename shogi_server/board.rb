@@ -621,7 +621,8 @@ class Board
     gote_hi = look_for_hi(false)
     if (@move_count >= 13 && @move_count <=17 && @array[3][4].to_s == "+HI" && !array[3][3] && !@array[3][5] && !have_piece?(@sente_hands, "KA"))
       return "side_pawn"
-    elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU")
+    elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU" &&
+           @array[3][2].to_s == "-KI" && !array[8][3] && gote_hi == 8 && array[7][7].to_s == "+FU")
       return "double_wing"
     elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") && !@array[3][5] && !@array[7][5] &&
            @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && sente_hi == 2 && gote_hi == 8 && !@array[2][7])
