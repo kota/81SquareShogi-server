@@ -337,6 +337,10 @@ class Game
     elsif (move_status == :oute_kaihimore)
       # the current player losed
       @result = GameResultOuteKaihiMoreWin.new(self, @next_player, @current_player)
+    elsif (move_status == :try_lose)
+      @result = GameResultTryWin.new(self, @next_player, @current_player)
+    elsif (move_status == :try_win)
+      @result = GameResultTryWin.new(self, @current_player, @next_player)
     else
       finish_flag = false
     end
@@ -381,6 +385,7 @@ class Game
     @start_time = Time::new
     @end_time = @start_time
     @status = "game"
+    @board.update_sennichite(@next_player)
   end
 
   def propose

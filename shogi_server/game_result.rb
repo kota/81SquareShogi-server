@@ -277,11 +277,21 @@ class GameResultOuteKaihiMoreWin < GameResultIllegalWin
   end
 end
 
-# This won't happen, though.
+# Only for Dobutsu-shogi
 #
-class GameResultOutoriWin < GameResultIllegalWin
+class GameResultOutoriWin < GameResultWin
   def initialize(game, winner, loser)
-    super(game, winner, loser, "outori")
+    super
+    @log_summary_type = "catch"
+    @result_type      = "#CATCH\n" + @result_type
+  end
+  
+  def process
+    @winner.write_safe("#CATCH\n#WIN\n")
+    @loser.write_safe( "#CATCH\n#LOSE\n")
+    log(@result_type)
+    log_summary
+    notify
   end
 end
 
@@ -311,6 +321,24 @@ class GameResultOuteSennichiteWin < GameResultWin
   def process
     @winner.write_safe("#OUTE_SENNICHITE\n#WIN\n")
     @loser.write_safe( "#OUTE_SENNICHITE\n#LOSE\n")
+    log(@result_type)
+    log_summary
+    notify
+  end
+end
+
+# Only for Dobutsu-shogi
+#
+class GameResultTryWin < GameResultWin
+  def initialize(game, winner, loser)
+    super
+    @log_summary_type = "try"
+    @result_type      = "#TRY\n" + @result_type
+  end
+  
+  def process
+    @winner.write_safe("#TRY\n#WIN\n")
+    @loser.write_safe( "#TRY\n#LOSE\n")
     log(@result_type)
     log_summary
     notify

@@ -114,4 +114,40 @@ class Piece56OU < Piece
   end
 end
 
+#Chick in Dobutsu-shogi
+class PieceZC < Piece
+  def initialize(*arg)
+    @point = 1
+    @normal_moves = [[0, +1]]
+    @promoted_moves = [[0, +1], [+1, +1], [-1, +1], [+1, +0], [-1, +0], [0, -1]]
+    @name = "ZC"
+    @promoted_name = "TO"
+    super
+  end
+end
+
+#Elephant in Dobutsu-shogi
+class PieceZE  < Piece
+  def initialize(*arg)
+    @point = 5
+    @normal_moves = [[+1, +1], [-1, +1], [+1, -1], [-1, -1]]
+    @promoted_moves = []
+    @name = "ZE"
+    @promoted_name = nil
+    super
+  end
+end
+
+#Girrafe in Dobutsu-shogi
+class PieceZG  < Piece
+  def initialize(*arg)
+    @point = 5
+    @normal_moves = [[0, +1], [+1, +0], [-1, +0], [0, -1]]
+    @promoted_moves = []
+    @name = "ZG"
+    @promoted_name = nil
+    super
+  end
+end
+
 end # ShogiServer
