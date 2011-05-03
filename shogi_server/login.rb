@@ -18,6 +18,7 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/handicapped_boards'
+require 'shogi_server/variant_boards'
 
 module ShogiServer # for a namespace
 
@@ -80,8 +81,10 @@ class Login
       ret = HCFU3Board
     when %r!^hcnaked_!
       ret = HCNAKEDBoard
-    when %r!^mini_!
-      ret = MiniBoard
+    when %r!^vamini_!
+      ret = VAMINIBoard
+    when %r!^va5656_!
+      ret = VA5656Board
     else
       ret = false
     end

@@ -18,7 +18,6 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/board'
-require 'shogi_server/variant_pieces'
 
 module ShogiServer # for a namespace
 
@@ -516,29 +515,6 @@ class HCFU3Board < Board
     end
     @teban = false
     @gote_base_point = 24
-  end
-end
-
-# Board for Mini-shogi.
-#
-class MiniBoard < Board
-  def initial
-    @gote_ou = Piece55OU::new(self, 3, 3, false)
-    PieceKI::new(self, 4, 3, false)
-    PieceGI::new(self, 5, 3, false)
-    PieceKA::new(self, 6, 3, false)
-    PieceHI::new(self, 7, 3, false)
-    Piece55FU::new(self, 3, 4, false)
-
-    @sente_ou = Piece55OU::new(self, 7, 7, true)
-    PieceKI::new(self, 6, 7, true)
-    PieceGI::new(self, 5, 7, true)
-    PieceKA::new(self, 4, 7, true)
-    PieceHI::new(self, 3, 7, true)
-    Piece55FU::new(self, 7, 6, true)
-
-    @teban = true
-    @gote_base_point = 0
   end
 end
 

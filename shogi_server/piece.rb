@@ -104,11 +104,11 @@ class Piece
 
     if (! @promoted)
       return false if (((@x == 0) || (@y == 0)) && (name != @name)) # can't put promoted piece
-      if (@sente)
-        return false if ((4 <= @y) && (4 <= y) && (name != @name)) # can't promote
-      else
-        return false if ((6 >= @y) && (6 >= y) && (name != @name))
-      end
+#      if (@sente)
+#        return false if ((4 <= @y) && (4 <= y) && (name != @name)) # can't promote
+#      else
+#        return false if ((6 >= @y) && (6 >= y) && (name != @name))
+#      end
     end
 
     if ((@x == 0) || (@y == 0))
