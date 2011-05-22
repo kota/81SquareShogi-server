@@ -123,9 +123,10 @@ class Login
   end
 
   def process
-    @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d OK\n",
+    @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d:%d:%d OK\n",
                                @player.name, @player.rate, @player.country_code,
-                               @player.wins, @player.losses, @player.streak, @player.streak_best))
+                               @player.wins, @player.losses, @player.streak, @player.streak_best,
+                               @player.wins34, @player.losses34))
     log_message(sprintf("user %s(%s) run in %s mode", @player.name, @player.socket.peeraddr[2], @player.protocol))
   end
 

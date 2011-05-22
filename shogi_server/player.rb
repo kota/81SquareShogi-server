@@ -138,6 +138,7 @@ class Player < BasicPlayer
 
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
+    @idle = false
 
     @protocol = nil             # CSA or x1
     @eol = eol || "\m"          # favorite eol code
@@ -285,7 +286,7 @@ class Player < BasicPlayer
   end
 
   def to_s
-    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %d", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %d %s", 
                    name,
                    @protocol,
                    @status,
@@ -299,7 +300,24 @@ class Player < BasicPlayer
                    wins,
                    losses,
                    streak,
-                   streak_best)
+                   streak_best,
+                   @idle)
+  end
+
+  def to_s34
+    return sprintf("%s %s %s %s %s %d %s %s %d %d %d %s", 
+                   name,
+                   @protocol,
+                   @status,
+                   @game_name != '' ? @game_name : '*',
+                   @sente ? '+' : @sente==false ? '-' : '*',
+                   country_code,
+                   @opponent ? @opponent.name : '*',
+                   @monitor_game ? @monitor_game.game_id : '*',
+                   @game ? @game.current_turn : 0,
+                   wins34,
+                   losses34,
+                   @idle)
   end
 
   def country_code
@@ -324,6 +342,15 @@ class Player < BasicPlayer
       else
         @attributes['streak'] = streak - 1
       end
+    end
+    save
+  end
+
+  def update_count34(is_winner)
+    if (is_winner)
+      @attributes['wins34'] = wins34 + 1
+    else
+      @attributes['losses34'] = losses34 + 1
     end
     save
   end

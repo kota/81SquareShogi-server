@@ -45,8 +45,12 @@ module ShogiServer
         game_id = $1
         message = $2
         cmd = GameChatCommand.new(str, player, $league.games[game_id], message)
+      when /^%%LIST34/
+        cmd = List34Command.new(str, player, $league.games)
       when /^%%LIST/
         cmd = ListCommand.new(str, player, $league.games)
+      when /^%%WHO34/
+        cmd = Who34Command.new(str, player, $league.players)
       when /^%%WHO/
         cmd = WhoCommand.new(str, player, $league.players)
       when /^%%%WATCHERS\s+(\S+)/
@@ -873,6 +877,28 @@ module ShogiServer
         buf.push(sprintf("##[WHO] %s\n", p.to_s))
       end
       buf.push("##[WHO] +OK\n")
+      @player.write_safe(buf.join)
+      return :continue
+    end
+  end
+
+  # Command of WHO34 (Extended functionality for 81Dojo_3by4
+  #
+  class Who34Command < Command
+
+    # players array of [[name, player]]
+    #
+    def initialize(str, player, players)
+      super(str, player)
+      @players = players
+    end
+
+    def call
+      buf = Array::new
+      @players.each do |name, p|
+        buf.push(sprintf("##[WHO34] %s\n", p.to_s34))
+      end
+      buf.push("##[WHO34] +OK\n")
       @player.write_safe(buf.join)
       return :continue
     end

@@ -225,10 +225,15 @@ class Game
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
-    if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/ && @current_turn > 3)
-      @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
-      @result.winner.update_count(true)
-      @result.loser.update_count(false)
+    if (@result && !@result.kind_of?(GameResultDraw))
+      if (@game_name =~ /^r_/ && @current_turn > 3)
+        @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
+        @result.winner.update_count(true)
+        @result.loser.update_count(false)
+      elsif (@game_name =~ /^vazoo_/ && @current_turn > 10)
+        @result.winner.update_count34(true)
+        @result.loser.update_count34(false)
+      end
     end
 
     @sente.status = "post_game" if @sente.status = "game"
