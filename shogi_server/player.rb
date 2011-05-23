@@ -18,13 +18,14 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/command'
+require 'shogi_server/config'
 require 'rubygems'
 require 'active_resource'
 
 module ShogiServer # for a namespace
 
 class BasicPlayer < ActiveResource::Base
-  self.site = 'http://localhost:3000'
+  self.site = RAILS_SITE
   self.prefix = '/api/'
 
   # Idetifier of the player in the rating system

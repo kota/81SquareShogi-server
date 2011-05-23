@@ -28,6 +28,7 @@
 #
 
 require 'erb'
+RAILS_SITE = 'http://localhost:3000'
 
 class Hash
   def deep_merge!(second)
