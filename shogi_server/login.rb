@@ -127,7 +127,8 @@ class Login
                                @player.name, @player.rate, @player.country_code,
                                @player.wins, @player.losses, @player.streak, @player.streak_best,
                                @player.wins34, @player.losses34))
-    log_message(sprintf("user %s(%s) run in %s mode", @player.name, @player.socket.peeraddr[2], @player.protocol))
+    log_message(sprintf("user %s run in %s mode", @player.name, @player.protocol))
+    @player.update_ip_address(@player.socket.peeraddr[2])
   end
 
   def incorrect_duplicated_player(str)

@@ -355,6 +355,13 @@ class Player < BasicPlayer
     save
   end
 
+  def update_ip_address(ip)
+    if (latest_ip_address != ip)
+      @attributes['latest_ip_address'] = ip
+      save
+    end
+  end
+
   def run(csa_1st_str=nil)
     while ( csa_1st_str || 
             str = gets_safe(@socket, (@socket_buffer.empty? ? Default_Timeout : 1)) )
