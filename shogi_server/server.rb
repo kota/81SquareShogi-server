@@ -1,4 +1,4 @@
-require 'shogi_server/config'
+require 'shogi_server/command'
 require 'rubygems'
 require 'active_resource'
 

@@ -20,6 +20,8 @@
 require 'kconv'
 require 'shogi_server'
 
+RAILS_SITE = 'http://localhost:3000'
+
 module ShogiServer
 
   class Command
