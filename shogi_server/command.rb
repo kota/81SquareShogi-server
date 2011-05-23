@@ -53,6 +53,9 @@ module ShogiServer
         cmd = Who34Command.new(str, player, $league.players)
       when /^%%WHO/
         cmd = WhoCommand.new(str, player, $league.players)
+      when /^%%%WATCHERS34\s+(\S+)/
+        game_id = $1
+        cmd = Watchers34Command.new(str, player, $league.games[game_id])
       when /^%%%WATCHERS\s+(\S+)/
         game_id = $1
         cmd = WatchersCommand.new(str, player, $league.games[game_id])
@@ -531,6 +534,28 @@ module ShogiServer
     end
   end
 
+  # Command of Watchers34. Extended functionality for 81DOJO_3BY4.
+  #
+  class Watchers34Command < BaseCommandForGame
+    def initialize(str, player, game)
+      super
+    end
+
+    def call
+      if (@game)
+        watchers = ""
+        @game.each_monitor{ |monitor_handler|
+          watchers += sprintf("##[WATCHERS34] %s %s %d\n", monitor_handler.player.name,
+                                                         monitor_handler.player.wins34 * 3 + monitor_handler.player.losses34,
+                                                         monitor_handler.player.country_code)
+        }
+        @player.write_safe(watchers)
+      end
+      @player.write_safe("##[WATCHERS34] +OK\n")
+      return :continue
+    end
+  end
+
   # Command of HELP
   #
   class HelpCommand < Command
@@ -855,6 +880,38 @@ module ShogiServer
                          game.opening))
       end
       buf.push("##[LIST] +OK\n")
+      @player.write_safe(buf.join)
+      return :continue
+    end
+  end
+
+  # Command of LIST34, extended functionality for 81DOJO_3BY4
+  #
+  class List34Command < Command
+
+    # games array of [game_id, game]
+    #
+    def initialize(str, player, games)
+      super(str, player)
+      @games = games
+    end
+
+    def call
+      buf = Array::new
+      @games.each do |id, game|
+        buf.push(sprintf("##[LIST34] %s %d %d %d %d %d %s %s %s %d\n",
+                         id,
+                         game.current_turn,
+                         game.sente.wins34 * 3 + game.sente.losses34,
+                         game.gote.wins34 * 3 + game.gote.losses34,
+                         game.sente.country_code,
+                         game.gote.country_code,
+                         game.status == "finished" ? game.result.black_result : game.status,
+                         game.sente.game == game,
+                         game.gote.game == game,
+                         game.monitors.length))
+      end
+      buf.push("##[LIST34] +OK\n")
       @player.write_safe(buf.join)
       return :continue
     end
