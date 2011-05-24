@@ -997,7 +997,7 @@ module ShogiServer
         @sendto.opponent = @player
         @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp])
       else
-        @player.write_safe("##[DECLINE]Opponent not in challengable status.\n")
+        @player.write_safe("##[DECLINE]Opponent not in challengeable status.\n")
       end
       return :continue
     end

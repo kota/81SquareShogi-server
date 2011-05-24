@@ -115,9 +115,17 @@ class BasicPlayer < ActiveResource::Base
     diff = ([[1,diff].max,31].min * c).round
     self.rate = self.rate + diff
     save
+    if (!provisional?)
+      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => diff})
+      @rate_change.save
+    end
     diff = (0.5 * diff).round if (provisional? && !loser.provisional?)
     loser.rate = loser.rate - diff
     loser.save
+    if (!loser.provisional?)
+      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - diff})
+      @rate_change.save
+    end
   end
 
 end
