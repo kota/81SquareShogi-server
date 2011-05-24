@@ -324,6 +324,10 @@ class Player < BasicPlayer
     respond_to?(:country) ? country.code : 0
   end
   
+  def exp
+    return wins34 * 3 + losses34
+  end
+  
   def update_count(is_winner)
     if (is_winner)
       @attributes['wins'] = wins + 1
