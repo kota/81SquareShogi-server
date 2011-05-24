@@ -101,6 +101,9 @@ module ShogiServer
         cmd = HelpCommand.new(str, player)
       when /^%%RATING/
         cmd = RatingCommand.new(str, player, $league.rated_players)
+      when /^%%IDLE\s+(\d*)/
+        value = $1.to_i
+        cmd = IdleCommand.new(str, player, value)
       when /^%%SETRATE\s+(\d*)/
         new_rate = $1.to_i
         cmd = SetRateCommand.new(str, player, new_rate)
@@ -586,6 +589,24 @@ module ShogiServer
                    [p.simple_player_id, p.rate, p.modified_at.strftime("%Y-%m-%d")])
       end
       @player.write_safe("##[RATING] +OK\n")
+      return :continue
+    end
+  end
+
+  # Command of IDLE, Extended functionality of 81-Dojo
+  #
+  class IdleCommand < Command
+    def initialize(str, player, value)
+      super(str, player)
+      @value = value
+    end
+
+    def call
+      if (@value == 0)
+        @player.idle = false
+      else
+        @player.idle = true
+      end
       return :continue
     end
   end

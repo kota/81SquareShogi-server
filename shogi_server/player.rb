@@ -160,7 +160,7 @@ class Player < BasicPlayer
     start_write_thread
   end
 
-  attr_accessor :socket, :status
+  attr_accessor :socket, :status, :idle
   attr_accessor :protocol, :eol, :game, :mytime, :monitor_game
   attr_accessor :main_thread
   attr_reader :socket_buffer
