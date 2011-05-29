@@ -619,7 +619,7 @@ class Board
   def opening
     sente_hi = look_for_hi(true)
     gote_hi = look_for_hi(false)
-    if (@move_count >= 13 && @move_count <=17 && @array[3][4].to_s == "+HI" && !array[3][3] && !@array[3][5] && !have_piece?(@sente_hands, "KA"))
+    if (@move_count >= 13 && @move_count <=17 && @array[3][4].to_s == "+HI" && !array[3][3] && !@array[3][5] && !have_piece?(@sente_hands, "KA") && gote_hi >= 7)
       return "side_pawn"
     elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU" &&
            @array[3][2].to_s == "-KI" && !array[8][3] && gote_hi == 8 && array[7][7].to_s == "+FU")

@@ -66,8 +66,10 @@ module ShogiServer
         cmd = ChallengeCommand.new(str, player, $league.find(sendto))
       when /^ACCEPT/
         cmd = AcceptCommand.new(str, player)
-      when /^DECLINE/
-        cmd = DeclineCommand.new(str, player)
+      when /^DECLINE\s?(.*)/
+        comment = $1
+        printf(comment)
+        cmd = DeclineCommand.new(str, player, comment)
       when /^REJECT/
         cmd = RejectCommand.new(str, player)
       when /^AGREE/
@@ -1013,7 +1015,9 @@ module ShogiServer
           return :continue
         end
       end
-      if (!@player.opponent && @sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
+      if (@player.opponent)
+        @player.write_safe("##[DECLINE]You cannot challenge. Relogin if you keep having the same problem.\n")
+      elsif (@sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
         @player.opponent = @sendto
         @sendto.opponent = @player
         @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp])
@@ -1044,13 +1048,15 @@ module ShogiServer
   # Command of DECLINE, Extended functionality for 81-Dojo
   #
   class DeclineCommand < Command
-    def initialize(str, player)
-      super
+    def initialize(str, player, comment)
+      super(str, player)
+      @comment = comment
     end
 
     def call
       if (@player.opponent && @player.opponent.opponent == @player)
-        @player.opponent.write_safe("##[DECLINE]Declined by opponent.\n")
+        @comment = "Declined." if (@comment == "")
+        @player.opponent.write_safe("##[DECLINE]%s\n" % [@comment])
         @player.opponent.opponent = nil
         @player.opponent = nil
       end
