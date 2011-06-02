@@ -230,7 +230,7 @@ class Game
         @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
         @result.winner.update_count(true)
         @result.loser.update_count(false)
-      elsif (@game_name =~ /^vazoo_/ && @current_turn > 10)
+      elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
         @result.winner.update_count34(true)
         @result.loser.update_count34(false)
       end
