@@ -124,6 +124,12 @@ module ShogiServer
       when /^%%GHOST\s+(\S+)/
         ghost = $1
         cmd = KillGhostCommand.new(str, player, $league.find(ghost), $league.games[ghost])
+      when /^%%BAN\s+(\S+)/
+        banned = $1
+        cmd = BanCommand.new(str, player, banned.downcase)
+      when /^%%DEBAN\s+(\S+)/
+        banned = $1
+        cmd = DeBanCommand.new(str, player, banned.downcase)
       when /^%%SETBUOY\s+(\S+)\s+(\S+)(.*)/
         game_name = $1
         moves     = $2
@@ -1073,11 +1079,14 @@ module ShogiServer
     end
 
     def call
-      if ($server)
+      if (!@player.is_admin?)
+      elsif ($server)
         if (@minutes > 0)
           $server.maintenance_at = Time.now + @minutes*60
+          @player.write_safe("Maintenance starts %d minutes later.\n" % [@minutes])
         else
           $server.maintenance_at = nil
+          @player.write_safe("Maintenance schedule is cleared.\n")
         end
       else
         @player.write_safe("##[ERROR] Could not set maintenance time.\n")
@@ -1094,7 +1103,8 @@ module ShogiServer
     end
 
     def call
-      if (@ghost_player)
+      if (!@player.is_admin?)
+      elsif (@ghost_player)
         @ghost_player.kill
         $league.delete(@ghost_player)
         log_info("Ghost of #{@ghost_player.name} was killed by #{@player.name}")
@@ -1108,6 +1118,45 @@ module ShogiServer
         @player.write_safe("You killed %s. (It is logged.)\n" % [@ghost_game.game_id])
       elsif
         @player.write_safe("No such ghost found\n")
+      end
+      return :continue
+    end
+  end
+
+  # Command of BAN, Extended functionality of 81-Dojo
+  #
+  class BanCommand < Command
+    def initialize(str, player, banned)
+      super(str, player)
+      @banned = banned
+    end
+
+    def call
+      if (!@player.is_admin?)
+      elsif (!$banned.include?(@banned))
+        $banned.push(@banned)
+        @player.write_safe("Banned %s.\n" % [@banned])
+      else
+        @player.write_safe("Already in list.\n")
+      end
+      return :continue
+    end
+  end
+
+  # Command of DE-BAN, Extended functionality of 81-Dojo
+  #
+  class DeBanCommand < Command
+    def initialize(str, player, banned)
+      super(str, player)
+      @banned = banned
+    end
+
+    def call
+      if (!@player.is_admin?)
+      elsif ($banned.reject! {|n| n == @banned})
+        @player.write_safe("Removed %s from ban list.\n" % [@banned])
+      else
+        @player.write_safe("%s is not in list.\n" % [@banned])
       end
       return :continue
     end

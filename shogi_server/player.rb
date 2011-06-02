@@ -442,7 +442,19 @@ class Player < BasicPlayer
   end
 
   def authenticated?(password)
-    crypted_password == encrypt(password)
+    if ($banned.include?(@socket.peeraddr[2]) || $banned.include?(name.downcase))
+      false
+    else
+      crypted_password == encrypt(password)
+    end
+  end
+
+  def is_admin?
+    if (["kota","hidetchi","test1","test2","test3"].include?(name.downcase))
+      true
+    else
+      false
+    end
   end
 
 end # class
