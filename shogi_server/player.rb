@@ -124,7 +124,7 @@ class BasicPlayer < ActiveResource::Base
     loser.rate = loser.rate - diff
     loser.save
     if (!loser.provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => loser.rate,:sente => !@sente,:opening => @game.opening})
+      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate,:sente => !@sente,:opening => @game.opening})
       @rate_change.save
     end
   end
