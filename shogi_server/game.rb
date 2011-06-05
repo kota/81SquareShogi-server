@@ -225,14 +225,19 @@ class Game
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
-    if (@result && !@result.kind_of?(GameResultDraw))
-      if (@game_name =~ /^r_/ && @current_turn > 3)
+    if (@result)
+      if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
         @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
         @result.winner.update_count(true)
         @result.loser.update_count(false)
       elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
-        @result.winner.update_count34(true)
-        @result.loser.update_count34(false)
+        if (@result.kind_of?(GameResultDraw))
+          @sente.update_count34(0)
+          @gote.update_count34(0)
+        else
+          @result.winner.update_count34(1)
+          @result.loser.update_count34(-1)
+        end
       end
     end
 
@@ -400,8 +405,8 @@ class Game
     @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
 
-    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code}\n"
-    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code}\n"
+    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code},#{@sente.exp}\n"
+    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code},#{@gote.exp}\n"
 
     @sente.write_safe(propose_message("+"))
     @gote.write_safe(propose_message("-"))

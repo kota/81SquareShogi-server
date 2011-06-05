@@ -314,18 +314,20 @@ class Player < BasicPlayer
   end
 
   def to_s34
-    return sprintf("%s %s %s %s %s %d %s %s %d %d %d %s", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %s", 
                    name,
                    @protocol,
                    @status,
                    @game_name != '' ? @game_name : '*',
                    @sente ? '+' : @sente==false ? '-' : '*',
+                   exp,
                    country_code,
                    @opponent ? @opponent.name : '*',
                    @monitor_game ? @monitor_game.game_id : '*',
                    @game ? @game.current_turn : 0,
                    wins34,
                    losses34,
+                   draws34,
                    @idle)
   end
 
@@ -334,7 +336,7 @@ class Player < BasicPlayer
   end
   
   def exp
-    return wins34 * 3 + losses34
+    return wins34 * 3 + losses34 + draws34
   end
   
   def update_count(is_winner)
@@ -359,12 +361,15 @@ class Player < BasicPlayer
     save
   end
 
-  def update_count34(is_winner)
-    if (is_winner)
+  def update_count34(v) # v:plus for win, minus for loss, zero for draw
+    if (v > 0)
       @attributes['wins34'] = wins34 + 1
-    else
+    elsif (v < 0)
       @attributes['losses34'] = losses34 + 1
+    else
+      @attributes['draws34'] = draws34 + 1
     end
+    @attributes['exp34'] = exp
     save
   end
 
