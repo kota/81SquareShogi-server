@@ -118,6 +118,9 @@ module ShogiServer
         cmd = ReconnectCommand.new(str, player, $league.games[game_id])
       when /^%%%DECLARE/
         cmd = DeclareCommand.new(str, player)
+      when /^%%GETIP\s+(\S+)/
+        suspect = $1
+        cmd = GetIPCommand.new(str, player, $league.find(suspect))
       when /^%%MAINTENANCE\s+(\d*)/
         minutes = $1.to_i
         cmd = MaintenanceCommand.new(str, player, minutes)
@@ -1119,6 +1122,18 @@ module ShogiServer
       elsif
         @player.write_safe("No such ghost found\n")
       end
+      return :continue
+    end
+  end
+
+  class GetIPCommand < Command
+    def initialize(str, player, suspect)
+      super(str, player)
+      @suspect = suspect
+    end
+
+    def call
+      @player.write_safe("##[GETIP]%s\n" % [@suspect.latest_ip_address]) if (@player.is_admin? && @suspect)
       return :continue
     end
   end
