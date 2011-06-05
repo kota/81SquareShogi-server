@@ -405,8 +405,8 @@ class Game
     @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
 
-    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code},#{@sente.exp}\n"
-    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code},#{@gote.exp}\n"
+    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code},#{@sente.exp34}\n"
+    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code},#{@gote.exp34}\n"
 
     @sente.write_safe(propose_message("+"))
     @gote.write_safe(propose_message("-"))

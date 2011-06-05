@@ -123,10 +123,11 @@ class Login
   end
 
   def process
+    @player.exp34 = @player.wins34 * 3 + @player.losses34 + @player.draws34 if (@player.exp34 == 0) ### TEMPORARY(check EXP store)
     @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d OK\n",
                                @player.name, @player.rate, @player.country_code,
                                @player.wins, @player.losses, @player.streak, @player.streak_best,
-                               @player.wins34, @player.losses34, @player.draws34, @player.exp, @player.max_rate))
+                               @player.wins34, @player.losses34, @player.draws34, @player.exp34, @player.max_rate))
     log_message(sprintf("user %s run in %s mode", @player.name, @player.protocol))
     @player.update_ip_address(@player.socket.peeraddr[2])
   end
@@ -191,7 +192,7 @@ class Loginx1 < Login
     super
     @player.write_safe(sprintf("##[LOGIN] +OK %s\n", PROTOCOL))
     res = sprintf("##[LOBBY_IN]%s,%d,%s,%d,%d,%d,%d,%d,%d\n", @player.name, @player.rate, @player.provisional?, @player.country_code,
-                                                        @player.wins, @player.losses, @player.streak, @player.streak_best, @player.exp)
+                                                        @player.wins, @player.losses, @player.streak, @player.streak_best, @player.exp34)
     $league.players.each do |name, p|
       p.write_safe(res)
     end

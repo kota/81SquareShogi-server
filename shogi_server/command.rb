@@ -562,7 +562,7 @@ module ShogiServer
         watchers = ""
         @game.each_monitor{ |monitor_handler|
           watchers += sprintf("##[WATCHERS34] %s %s %d\n", monitor_handler.player.name,
-                                                         monitor_handler.player.exp,
+                                                         monitor_handler.player.exp34,
                                                          monitor_handler.player.country_code)
         }
         @player.write_safe(watchers)
@@ -936,8 +936,8 @@ module ShogiServer
         buf.push(sprintf("##[LIST34] %s %d %d %d %d %d %s %s %s %d\n",
                          id,
                          game.current_turn,
-                         game.sente.exp,
-                         game.gote.exp,
+                         game.sente.exp34,
+                         game.gote.exp34,
                          game.sente.country_code,
                          game.gote.country_code,
                          game.status == "finished" ? game.result.black_result : game.status,
@@ -1029,7 +1029,7 @@ module ShogiServer
       elsif (@sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
         @player.opponent = @sendto
         @sendto.opponent = @player
-        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp])
+        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp34])
       else
         @player.write_safe("##[DECLINE]Opponent not in challengeable status.\n")
       end

@@ -320,7 +320,7 @@ class Player < BasicPlayer
                    @status,
                    @game_name != '' ? @game_name : '*',
                    @sente ? '+' : @sente==false ? '-' : '*',
-                   exp,
+                   exp34,
                    country_code,
                    @opponent ? @opponent.name : '*',
                    @monitor_game ? @monitor_game.game_id : '*',
@@ -333,10 +333,6 @@ class Player < BasicPlayer
 
   def country_code
     respond_to?(:country) ? country.code : 0
-  end
-  
-  def exp
-    return wins34 * 3 + losses34 + draws34
   end
   
   def update_count(is_winner)
@@ -364,12 +360,14 @@ class Player < BasicPlayer
   def update_count34(v) # v:plus for win, minus for loss, zero for draw
     if (v > 0)
       @attributes['wins34'] = wins34 + 1
+      @attributes['exp34'] = exp34 + 3
     elsif (v < 0)
       @attributes['losses34'] = losses34 + 1
+      @attributes['exp34'] = exp34 + 1
     else
       @attributes['draws34'] = draws34 + 1
+      @attributes['exp34'] = exp34 + 1
     end
-    @attributes['exp34'] = exp
     save
   end
 
