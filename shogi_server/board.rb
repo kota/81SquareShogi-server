@@ -624,7 +624,8 @@ class Board
     elsif (@move_count == 10 && @array[2][4].to_s == "+HI" && @array[2][3].to_s == "-FU" && @array[3][3].to_s == "-FU" &&
            @array[3][2].to_s == "-KI" && !array[8][3] && gote_hi == 8 && array[7][7].to_s == "+FU")
       return "double_wing"
-    elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") && !@array[3][5] && !@array[7][5] &&
+    elsif (@move_count >= 11 && @move_count <= 13 && have_piece?(@sente_hands, "KA") && have_piece?(@gote_hands, "KA") &&
+           !@array[3][5] && !@array[7][5] && @array[3][3].to_s != "-FU" && @array[7][7].to_s != "+FU" &&
            @array[8][9].to_s == "+KE" && @array[2][1].to_s == "-KE" && sente_hi == 2 && gote_hi == 8 && !@array[2][7])
       return "bishop_exchange"
     elsif (@move_count >= 17 && @move_count <= 24 && gote_hands.empty? && sente_hi == 2 && gote_hi == 8 &&
@@ -637,10 +638,18 @@ class Board
         if (sente_hi >= 5 && @sente_ou.x <= 5)
           return "double_ranging"
         else
-          return "opposition_white" + gote_hi.to_s
+          if (@array[gote_hi][2].to_s != "-HI" && @array[gote_hi][3].to_s == "-FU")
+            return "*"
+          else
+            return "opposition_white" + gote_hi.to_s
+          end
         end
       elsif (sente_hi >= 5 && @sente_ou.x <= 5)
-        return "opposition_black" + (10 - sente_hi).to_s
+        if (@array[sente_hi][8].to_s != "+HI" && @array[sente_hi][7].to_s == "+FU")
+          return "*"
+        else
+          return "opposition_black" + (10 - sente_hi).to_s
+        end
       else
         return "*"
       end
