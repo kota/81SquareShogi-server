@@ -380,7 +380,7 @@ module ShogiServer
 
     def write_safe(game_id, str)
       str.chomp.split("\n").each do |line|
-        @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, line.chomp])
+        @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, line.chomp]) unless line.match(/^'/)
       end
       @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, "+OK"])
     end

@@ -311,7 +311,7 @@ class Game
         end
 
         @monitors.each do |monitor_handler|
-          monitor_handler.write_one_move(@game_id, self)
+          monitor_handler.write_one_move(@kifu.id, self)
         end
 #      end # if
         # if move_status is :toryo then a GameResult message will be sent to monitors   
