@@ -1150,7 +1150,10 @@ module ShogiServer
       if (!@player.is_admin?)
       elsif (!$banned.include?(@banned))
         $banned.push(@banned)
-        @player.write_safe("Banned %s.\n" % [@banned])
+        @player.write_safe("Banned %s\n" % [@banned])
+        $banned.each do |banned|
+          @player.write_safe("##[BANNED] %s\n" % [banned])
+        end
       else
         @player.write_safe("Already in list.\n")
       end
@@ -1170,6 +1173,9 @@ module ShogiServer
       if (!@player.is_admin?)
       elsif ($banned.reject! {|n| n == @banned})
         @player.write_safe("Removed %s from ban list.\n" % [@banned])
+        $banned.each do |banned|
+          @player.write_safe("##[BANNED] %s\n" % [banned])
+        end
       else
         @player.write_safe("%s is not in list.\n" % [@banned])
       end
