@@ -323,6 +323,7 @@ def main
   $server.start_log
 
   $offline_message = Hash::new
+  $banned = Array::new
 
   $league.dir = $topdir
 

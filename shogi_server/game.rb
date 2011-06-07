@@ -225,10 +225,20 @@ class Game
     @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
     @kifu.save
 
-    if (@result && !@result.kind_of?(GameResultDraw) && @game_name =~ /^r_/ && @current_turn > 3)
-      @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
-      @result.winner.update_count(true)
-      @result.loser.update_count(false)
+    if (@result)
+      if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
+        @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
+        @result.winner.update_count(true)
+        @result.loser.update_count(false)
+      elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
+        if (@result.kind_of?(GameResultDraw))
+          @sente.update_count34(0)
+          @gote.update_count34(0)
+        else
+          @result.winner.update_count34(1)
+          @result.loser.update_count34(-1)
+        end
+      end
     end
 
     @sente.status = "post_game" if @sente.status = "game"
@@ -301,7 +311,7 @@ class Game
         end
 
         @monitors.each do |monitor_handler|
-          monitor_handler.write_one_move(@game_id, self)
+          monitor_handler.write_one_move(@kifu.id, self)
         end
 #      end # if
         # if move_status is :toryo then a GameResult message will be sent to monitors   
@@ -337,6 +347,10 @@ class Game
     elsif (move_status == :oute_kaihimore)
       # the current player losed
       @result = GameResultOuteKaihiMoreWin.new(self, @next_player, @current_player)
+    elsif (move_status == :try_lose)
+      @result = GameResultTryWin.new(self, @next_player, @current_player)
+    elsif (move_status == :try_win)
+      @result = GameResultTryWin.new(self, @current_player, @next_player)
     else
       finish_flag = false
     end
@@ -345,6 +359,11 @@ class Game
     @current_player, @next_player = @next_player, @current_player
     @start_time = Time::new
     return finish_flag
+  end
+
+  def compensate_delay(delay)
+    @start_time += delay
+    log_message(sprintf("Gave additional thinking time of %d to %s", delay, @current_player.name))
   end
 
   def is_startable_status?
@@ -362,6 +381,11 @@ class Game
 
   def start
     log_message(sprintf("game started %s", @game_id))
+    res = sprintf("##[START]%s,%d,%s,%s,%d,%s\n", @sente.name, @sente.rate, @sente.provisional?,
+                                                  @gote.name, @gote.rate, @gote.provisional?)
+    $league.players.each do |name, p|
+      p.write_safe(res)
+    end
     @sente.status = "game"
     @gote.status  = "game"
     @sente.write_safe(sprintf("START:%s:%d\n", @game_id, @kifu.id))
@@ -371,6 +395,7 @@ class Game
     @start_time = Time::new
     @end_time = @start_time
     @status = "game"
+    @board.update_sennichite(@next_player)
   end
 
   def propose
@@ -380,8 +405,8 @@ class Game
     @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
 
-    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code}\n"
-    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code}\n"
+    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code},#{@sente.exp34}\n"
+    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code},#{@gote.exp34}\n"
 
     @sente.write_safe(propose_message("+"))
     @gote.write_safe(propose_message("-"))

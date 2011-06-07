@@ -20,6 +20,8 @@
 require 'kconv'
 require 'shogi_server'
 
+RAILS_SITE = 'http://localhost:3000'
+
 module ShogiServer
 
   class Command
@@ -45,10 +47,17 @@ module ShogiServer
         game_id = $1
         message = $2
         cmd = GameChatCommand.new(str, player, $league.games[game_id], message)
+      when /^%%LIST34/
+        cmd = List34Command.new(str, player, $league.games)
       when /^%%LIST/
         cmd = ListCommand.new(str, player, $league.games)
+      when /^%%WHO34/
+        cmd = Who34Command.new(str, player, $league.players)
       when /^%%WHO/
         cmd = WhoCommand.new(str, player, $league.players)
+      when /^%%%WATCHERS34\s+(\S+)/
+        game_id = $1
+        cmd = Watchers34Command.new(str, player, $league.games[game_id])
       when /^%%%WATCHERS\s+(\S+)/
         game_id = $1
         cmd = WatchersCommand.new(str, player, $league.games[game_id])
@@ -57,8 +66,10 @@ module ShogiServer
         cmd = ChallengeCommand.new(str, player, $league.find(sendto))
       when /^ACCEPT/
         cmd = AcceptCommand.new(str, player)
-      when /^DECLINE/
-        cmd = DeclineCommand.new(str, player)
+      when /^DECLINE\s?(.*)/
+        comment = $1
+        printf(comment)
+        cmd = DeclineCommand.new(str, player, comment)
       when /^REJECT/
         cmd = RejectCommand.new(str, player)
       when /^AGREE/
@@ -92,6 +103,9 @@ module ShogiServer
         cmd = HelpCommand.new(str, player)
       when /^%%RATING/
         cmd = RatingCommand.new(str, player, $league.rated_players)
+      when /^%%IDLE\s+(\d*)/
+        value = $1.to_i
+        cmd = IdleCommand.new(str, player, value)
       when /^%%SETRATE\s+(\d*)/
         new_rate = $1.to_i
         cmd = SetRateCommand.new(str, player, new_rate)
@@ -104,12 +118,21 @@ module ShogiServer
         cmd = ReconnectCommand.new(str, player, $league.games[game_id])
       when /^%%%DECLARE/
         cmd = DeclareCommand.new(str, player)
+      when /^%%GETIP\s+(\S+)/
+        suspect = $1
+        cmd = GetIPCommand.new(str, player, $league.find(suspect))
       when /^%%MAINTENANCE\s+(\d*)/
         minutes = $1.to_i
         cmd = MaintenanceCommand.new(str, player, minutes)
       when /^%%GHOST\s+(\S+)/
         ghost = $1
         cmd = KillGhostCommand.new(str, player, $league.find(ghost), $league.games[ghost])
+      when /^%%BAN\s+(\S+)/
+        banned = $1
+        cmd = BanCommand.new(str, player, banned.downcase)
+      when /^%%DEBAN\s+(\S+)/
+        banned = $1
+        cmd = DeBanCommand.new(str, player, banned.downcase)
       when /^%%SETBUOY\s+(\S+)\s+(\S+)(.*)/
         game_name = $1
         moves     = $2
@@ -357,7 +380,7 @@ module ShogiServer
 
     def write_safe(game_id, str)
       str.chomp.split("\n").each do |line|
-        @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, line.chomp])
+        @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, line.chomp]) unless line.match(/^'/)
       end
       @player.write_safe("##[%s][%s] %s\n" % [@header, game_id, "+OK"])
     end
@@ -527,6 +550,28 @@ module ShogiServer
     end
   end
 
+  # Command of Watchers34. Extended functionality for 81DOJO_3BY4.
+  #
+  class Watchers34Command < BaseCommandForGame
+    def initialize(str, player, game)
+      super
+    end
+
+    def call
+      if (@game)
+        watchers = ""
+        @game.each_monitor{ |monitor_handler|
+          watchers += sprintf("##[WATCHERS34] %s %s %d\n", monitor_handler.player.name,
+                                                         monitor_handler.player.exp34,
+                                                         monitor_handler.player.country_code)
+        }
+        @player.write_safe(watchers)
+      end
+      @player.write_safe("##[WATCHERS34] +OK\n")
+      return :continue
+    end
+  end
+
   # Command of HELP
   #
   class HelpCommand < Command
@@ -555,6 +600,24 @@ module ShogiServer
                    [p.simple_player_id, p.rate, p.modified_at.strftime("%Y-%m-%d")])
       end
       @player.write_safe("##[RATING] +OK\n")
+      return :continue
+    end
+  end
+
+  # Command of IDLE, Extended functionality of 81-Dojo
+  #
+  class IdleCommand < Command
+    def initialize(str, player, value)
+      super(str, player)
+      @value = value
+    end
+
+    def call
+      if (@value == 0)
+        @player.idle = false
+      else
+        @player.idle = true
+      end
       return :continue
     end
   end
@@ -750,9 +813,10 @@ module ShogiServer
     end
 
     def call
+      res = sprintf("##[CHAT][%s] %s\n", @player.name, @message)
       @players.each do |name, p| # TODO player change name
         if (p.protocol != LoginCSA::PROTOCOL)
-          p.write_safe(sprintf("##[CHAT][%s] %s\n", @player.name, @message)) 
+          p.write_safe(res)
         end
       end
       return :continue
@@ -855,6 +919,38 @@ module ShogiServer
     end
   end
 
+  # Command of LIST34, extended functionality for 81DOJO_3BY4
+  #
+  class List34Command < Command
+
+    # games array of [game_id, game]
+    #
+    def initialize(str, player, games)
+      super(str, player)
+      @games = games
+    end
+
+    def call
+      buf = Array::new
+      @games.each do |id, game|
+        buf.push(sprintf("##[LIST34] %s %d %d %d %d %d %s %s %s %d\n",
+                         id,
+                         game.current_turn,
+                         game.sente.exp34,
+                         game.gote.exp34,
+                         game.sente.country_code,
+                         game.gote.country_code,
+                         game.status == "finished" ? game.result.black_result : game.status,
+                         game.sente.game == game,
+                         game.gote.game == game,
+                         game.monitors.length))
+      end
+      buf.push("##[LIST34] +OK\n")
+      @player.write_safe(buf.join)
+      return :continue
+    end
+  end
+
   # Command of WHO
   #
   class WhoCommand < Command
@@ -872,6 +968,28 @@ module ShogiServer
         buf.push(sprintf("##[WHO] %s\n", p.to_s))
       end
       buf.push("##[WHO] +OK\n")
+      @player.write_safe(buf.join)
+      return :continue
+    end
+  end
+
+  # Command of WHO34 (Extended functionality for 81Dojo_3by4
+  #
+  class Who34Command < Command
+
+    # players array of [[name, player]]
+    #
+    def initialize(str, player, players)
+      super(str, player)
+      @players = players
+    end
+
+    def call
+      buf = Array::new
+      @players.each do |name, p|
+        buf.push(sprintf("##[WHO34] %s\n", p.to_s34))
+      end
+      buf.push("##[WHO34] +OK\n")
       @player.write_safe(buf.join)
       return :continue
     end
@@ -906,12 +1024,14 @@ module ShogiServer
           return :continue
         end
       end
-      if (!@player.opponent && @sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
+      if (@player.opponent)
+        @player.write_safe("##[DECLINE]You cannot challenge. Relogin if you keep having the same problem.\n")
+      elsif (@sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
         @player.opponent = @sendto
         @sendto.opponent = @player
-        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : ""])
+        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp34])
       else
-        @player.write_safe("##[DECLINE]Opponent not in challengable status.\n")
+        @player.write_safe("##[DECLINE]Opponent not in challengeable status.\n")
       end
       return :continue
     end
@@ -937,13 +1057,15 @@ module ShogiServer
   # Command of DECLINE, Extended functionality for 81-Dojo
   #
   class DeclineCommand < Command
-    def initialize(str, player)
-      super
+    def initialize(str, player, comment)
+      super(str, player)
+      @comment = comment
     end
 
     def call
       if (@player.opponent && @player.opponent.opponent == @player)
-        @player.opponent.write_safe("##[DECLINE]Declined by opponent.\n")
+        @comment = "Declined." if (@comment == "")
+        @player.opponent.write_safe("##[DECLINE]%s\n" % [@comment])
         @player.opponent.opponent = nil
         @player.opponent = nil
       end
@@ -960,11 +1082,14 @@ module ShogiServer
     end
 
     def call
-      if ($server)
+      if (!@player.is_admin?)
+      elsif ($server)
         if (@minutes > 0)
           $server.maintenance_at = Time.now + @minutes*60
+          @player.write_safe("Maintenance starts %d minutes later.\n" % [@minutes])
         else
           $server.maintenance_at = nil
+          @player.write_safe("Maintenance schedule is cleared.\n")
         end
       else
         @player.write_safe("##[ERROR] Could not set maintenance time.\n")
@@ -981,7 +1106,8 @@ module ShogiServer
     end
 
     def call
-      if (@ghost_player)
+      if (!@player.is_admin?)
+      elsif (@ghost_player)
         @ghost_player.kill
         $league.delete(@ghost_player)
         log_info("Ghost of #{@ghost_player.name} was killed by #{@player.name}")
@@ -995,6 +1121,63 @@ module ShogiServer
         @player.write_safe("You killed %s. (It is logged.)\n" % [@ghost_game.game_id])
       elsif
         @player.write_safe("No such ghost found\n")
+      end
+      return :continue
+    end
+  end
+
+  class GetIPCommand < Command
+    def initialize(str, player, suspect)
+      super(str, player)
+      @suspect = suspect
+    end
+
+    def call
+      @player.write_safe("##[GETIP]%s\n" % [@suspect.latest_ip_address]) if (@player.is_admin? && @suspect)
+      return :continue
+    end
+  end
+
+  # Command of BAN, Extended functionality of 81-Dojo
+  #
+  class BanCommand < Command
+    def initialize(str, player, banned)
+      super(str, player)
+      @banned = banned
+    end
+
+    def call
+      if (!@player.is_admin?)
+      elsif (!$banned.include?(@banned))
+        $banned.push(@banned)
+        @player.write_safe("Banned %s\n" % [@banned])
+        $banned.each do |banned|
+          @player.write_safe("##[BANNED] %s\n" % [banned])
+        end
+      else
+        @player.write_safe("Already in list.\n")
+      end
+      return :continue
+    end
+  end
+
+  # Command of DE-BAN, Extended functionality of 81-Dojo
+  #
+  class DeBanCommand < Command
+    def initialize(str, player, banned)
+      super(str, player)
+      @banned = banned
+    end
+
+    def call
+      if (!@player.is_admin?)
+      elsif ($banned.reject! {|n| n == @banned})
+        @player.write_safe("Removed %s from ban list.\n" % [@banned])
+        $banned.each do |banned|
+          @player.write_safe("##[BANNED] %s\n" % [banned])
+        end
+      else
+        @player.write_safe("%s is not in list.\n" % [@banned])
       end
       return :continue
     end

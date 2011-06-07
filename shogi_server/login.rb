@@ -18,6 +18,7 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 require 'shogi_server/handicapped_boards'
+require 'shogi_server/variant_boards'
 
 module ShogiServer # for a namespace
 
@@ -80,6 +81,12 @@ class Login
       ret = HCFU3Board
     when %r!^hcnaked_!
       ret = HCNAKEDBoard
+    when %r!^vamini_!
+      ret = VAMINIBoard
+    when %r!^va5656_!
+      ret = VA5656Board
+    when %r!^vazoo_!
+      ret = VAZOOBoard
     else
       ret = false
     end
@@ -116,10 +123,13 @@ class Login
   end
 
   def process
-    @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d OK\n",
+    @player.exp34 = @player.wins34 * 3 + @player.losses34 + @player.draws34 if (@player.exp34 == 0) ### TEMPORARY(check EXP store)
+    @player.write_safe(sprintf("LOGIN:%s:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d OK\n",
                                @player.name, @player.rate, @player.country_code,
-                               @player.wins, @player.losses, @player.streak, @player.streak_best))
-    log_message(sprintf("user %s(%s) run in %s mode", @player.name, @player.socket.peeraddr[2], @player.protocol))
+                               @player.wins, @player.losses, @player.streak, @player.streak_best,
+                               @player.wins34, @player.losses34, @player.draws34, @player.exp34, @player.max_rate))
+    log_message(sprintf("user %s run in %s mode", @player.name, @player.protocol))
+    @player.update_ip_address(@player.socket.peeraddr[2])
   end
 
   def incorrect_duplicated_player(str)
@@ -181,6 +191,11 @@ class Loginx1 < Login
   def process
     super
     @player.write_safe(sprintf("##[LOGIN] +OK %s\n", PROTOCOL))
+    res = sprintf("##[LOBBY_IN]%s,%d,%s,%d,%d,%d,%d,%d,%d\n", @player.name, @player.rate, @player.provisional?, @player.country_code,
+                                                        @player.wins, @player.losses, @player.streak, @player.streak_best, @player.exp34)
+    $league.players.each do |name, p|
+      p.write_safe(res)
+    end
     if ($offline_message.include?(@player.name.downcase))
       $offline_message[@player.name.downcase].chomp.split("\n").each do |line|
         @player.write_safe("##[OFFLINE_PM]%s\n" % [line.chomp])

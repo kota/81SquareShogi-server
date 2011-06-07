@@ -43,6 +43,7 @@ require 'shogi_server/command'
 require 'shogi_server/buoy'
 require 'shogi_server/kifu'
 require 'shogi_server/server'
+require 'shogi_server/rate_change_history'
 
 module ShogiServer # for a namespace
 

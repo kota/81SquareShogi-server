@@ -24,7 +24,7 @@ require 'active_resource'
 module ShogiServer # for a namespace
 
 class BasicPlayer < ActiveResource::Base
-  self.site = 'http://localhost'
+  self.site = RAILS_SITE
   self.prefix = '/api/'
 
   # Idetifier of the player in the rating system
@@ -113,10 +113,19 @@ class BasicPlayer < ActiveResource::Base
     diff = 32*(0.5 - 1.4217e-3*diff + 2.4336e-7*diff*diff.abs + 2.514e-9*diff*diff.abs**2 - 1.991e-12*diff*diff.abs**3)
     diff = ([[1,diff].max,31].min * c).round
     self.rate = self.rate + diff
+    @attributes['max_rate'] = self.rate if (self.rate > max_rate)
     save
+    if (!provisional?)
+      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate,:sente => @sente,:opening => @game.opening})
+      @rate_change.save
+    end
     diff = (0.5 * diff).round if (provisional? && !loser.provisional?)
     loser.rate = loser.rate - diff
     loser.save
+    if (!loser.provisional?)
+      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate,:sente => !@sente,:opening => @game.opening})
+      @rate_change.save
+    end
   end
 
 end
@@ -137,6 +146,7 @@ class Player < BasicPlayer
 
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
+    @idle = false
 
     @protocol = nil             # CSA or x1
     @eol = eol || "\m"          # favorite eol code
@@ -150,7 +160,7 @@ class Player < BasicPlayer
     start_write_thread
   end
 
-  attr_accessor :socket, :status
+  attr_accessor :socket, :status, :idle
   attr_accessor :protocol, :eol, :game, :mytime, :monitor_game
   attr_accessor :main_thread
   attr_reader :socket_buffer
@@ -198,6 +208,12 @@ class Player < BasicPlayer
   
   def kill
     log_message(sprintf("user %s killed", @name))
+    if (!@game && !@monitor_game)
+      res = sprintf("##[LOBBY_OUT]%s\n", name)
+      $league.players.each do |name, p|
+        p.write_safe(res)
+      end
+    end
     if (@game && @game.status != "closed")
       @game.disconnect(self)
     end
@@ -278,7 +294,7 @@ class Player < BasicPlayer
   end
 
   def to_s
-    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %d", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %d %s", 
                    name,
                    @protocol,
                    @status,
@@ -292,7 +308,26 @@ class Player < BasicPlayer
                    wins,
                    losses,
                    streak,
-                   streak_best)
+                   streak_best,
+                   @idle)
+  end
+
+  def to_s34
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %s", 
+                   name,
+                   @protocol,
+                   @status,
+                   @game_name != '' ? @game_name : '*',
+                   @sente ? '+' : @sente==false ? '-' : '*',
+                   exp34,
+                   country_code,
+                   @opponent ? @opponent.name : '*',
+                   @monitor_game ? @monitor_game.game_id : '*',
+                   @game ? @game.current_turn : 0,
+                   wins34,
+                   losses34,
+                   draws34,
+                   @idle)
   end
 
   def country_code
@@ -319,6 +354,27 @@ class Player < BasicPlayer
       end
     end
     save
+  end
+
+  def update_count34(v) # v:plus for win, minus for loss, zero for draw
+    if (v > 0)
+      @attributes['wins34'] = wins34 + 1
+      @attributes['exp34'] = exp34 + 3
+    elsif (v < 0)
+      @attributes['losses34'] = losses34 + 1
+      @attributes['exp34'] = exp34 + 1
+    else
+      @attributes['draws34'] = draws34 + 1
+      @attributes['exp34'] = exp34 + 1
+    end
+    save
+  end
+
+  def update_ip_address(ip)
+    if (latest_ip_address != ip)
+      @attributes['latest_ip_address'] = ip
+      save
+    end
   end
 
   def run(csa_1st_str=nil)
@@ -350,7 +406,8 @@ class Player < BasicPlayer
 
         delay = Time.now - time
         if delay > 5
-          log_warning("Detected a long delay: %.2f sec" % [delay])
+          log_warning("Detected a long delay for %s: %.2f sec" % [@name, delay])
+          @game.compensate_delay(delay) if (@game && @game.turn?(self))
         end
         cmd = ShogiServer::Command.factory(str, self, time)
         case cmd.call
@@ -387,7 +444,19 @@ class Player < BasicPlayer
   end
 
   def authenticated?(password)
-    crypted_password == encrypt(password)
+    if ($banned.include?(@socket.peeraddr[2]) || $banned.include?(name.downcase))
+      false
+    else
+      crypted_password == encrypt(password)
+    end
+  end
+
+  def is_admin?
+    if (["kota","hidetchi","test1","test2","test3"].include?(name.downcase))
+      true
+    else
+      false
+    end
   end
 
 end # class

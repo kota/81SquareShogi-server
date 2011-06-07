@@ -4,7 +4,7 @@ require 'active_resource'
 
 module ShogiServer # for a namespace
 
-class Kifu < ActiveResource::Base
+class RateChangeHistory < ActiveResource::Base
   self.site = RAILS_SITE
   self.prefix = '/api/'
 end # class
