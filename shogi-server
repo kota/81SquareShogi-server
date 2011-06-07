@@ -263,6 +263,10 @@ def login_loop(client)
       if (ShogiServer::Login::good_login?(str))
         player = ShogiServer::Player.find(:one,:from => :authenticate,:params => {:login => str.split[1],:password => str.split[2] })
         player.init(str,client,eol)
+        if player.banned?
+          player = nil
+          break
+        end
         login  = ShogiServer::Login::factory(str, player)
         if (current_player = $league.find(player.name))
           if (current_player.password == player.password)

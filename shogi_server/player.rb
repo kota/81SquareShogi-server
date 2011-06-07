@@ -443,12 +443,8 @@ class Player < BasicPlayer
     self.class.password_digest(password, salt)
   end
 
-  def authenticated?(password)
-    if ($banned.include?(@socket.peeraddr[2]) || $banned.include?(name.downcase))
-      false
-    else
-      crypted_password == encrypt(password)
-    end
+  def banned?
+    ($banned.include?(@socket.peeraddr[2]) || $banned.include?(name.downcase))
   end
 
   def is_admin?
