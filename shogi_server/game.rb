@@ -227,7 +227,7 @@ class Game
 
     if (@result)
       if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
-        @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
+        @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
         @result.winner.update_count(true)
         @result.loser.update_count(false)
       elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
@@ -499,6 +499,14 @@ EOM
     end
 
     return false
+  end
+  
+  def update_auth_token(player)
+    if (@sente.name.downcase == player.name.downcase)
+      @sente.auth_token = player.auth_token
+    elsif (@gote.name.downcase == player.name.downcase)
+      @gote.auth_token = player.auth_token
+    end
   end
   
   private

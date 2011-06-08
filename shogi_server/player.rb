@@ -108,7 +108,7 @@ class BasicPlayer < ActiveResource::Base
     end
   end
 
-  def update_rate(loser, c)
+  def update_rate(loser, c, opening)
     diff = rate - loser.rate
     diff = 32*(0.5 - 1.4217e-3*diff + 2.4336e-7*diff*diff.abs + 2.514e-9*diff*diff.abs**2 - 1.991e-12*diff*diff.abs**3)
     diff = ([[1,diff].max,31].min * c).round
@@ -116,14 +116,14 @@ class BasicPlayer < ActiveResource::Base
     @attributes['max_rate'] = self.rate if (self.rate > max_rate)
     save
     if (!provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate,:sente => @sente,:opening => @game.opening})
+      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate,:sente => @sente,:opening => opening})
       @rate_change.save
     end
     diff = (0.5 * diff).round if (provisional? && !loser.provisional?)
     loser.rate = loser.rate - diff
     loser.save
     if (!loser.provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate,:sente => !@sente,:opening => @game.opening})
+      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate,:sente => !@sente,:opening => opening})
       @rate_change.save
     end
   end
