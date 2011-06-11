@@ -225,11 +225,12 @@ class Player < BasicPlayer
       end
     end
     if (@monitor_game)
+      res = sprintf("##[LEAVE][%s]\n", @name)
       @monitor_game.monitoroff(MonitorHandler2.new(self))
-      @monitor_game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @name)) if (@monitor_game.sente && @monitor_game.sente.game == @monitor_game)
-      @monitor_game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @name)) if (@monitor_game.gote && @monitor_game.gote.game == @monitor_game)
+      @monitor_game.sente.write_safe(res) if (@monitor_game.sente && @monitor_game.sente.game == @monitor_game)
+      @monitor_game.gote.write_safe(res) if (@monitor_game.gote && @monitor_game.gote.game == @monitor_game)
       @monitor_game.each_monitor { |monitor_handler|
-        monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @name))
+        monitor_handler.player.write_safe(res)
       }
     end
     finish

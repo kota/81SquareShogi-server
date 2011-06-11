@@ -323,10 +323,11 @@ module ShogiServer
         if (@game.is_closable_status?)
           @game.close
         else
-          @game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
-          @game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+          res = sprintf("##[LEAVE][%s]\n", @player.name)
+          @game.sente.write_safe(res) if (@game.sente && @game.sente.game == @game)
+          @game.gote.write_safe(res) if (@game.gote && @game.gote.game == @game)
           @game.each_monitor { |monitor_handler|
-            monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @player.name))
+            monitor_handler.player.write_safe(res)
           }
         end
       else
@@ -451,15 +452,16 @@ module ShogiServer
 
     def call
       if (@game)
+        res = sprintf("##[ENTER][%s]%d,%d,%d\n", @player.name, @player.country_code, @player.rate, @player.exp34)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
         @player.monitor_game = @game
         since_last_move = sprintf("$SINCE_LAST_MOVE:%d", Time::new - @game.end_time)
         monitor_handler.write_safe(@game.kifu.id, @game.kifu.contents.chomp + "\n" + since_last_move)
-        @game.sente.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
-        @game.gote.write_safe(sprintf("##[ENTER][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+        @game.sente.write_safe(res) if (@game.sente && @game.sente.game == @game)
+        @game.gote.write_safe(res) if (@game.gote && @game.gote.game == @game)
         @game.each_monitor { |monitor_handler|
-          monitor_handler.player.write_safe(sprintf("##[ENTER][%s]\n", @player.name))
+          monitor_handler.player.write_safe(res)
         }
       end
       return :continue
@@ -473,12 +475,13 @@ module ShogiServer
 
     def call
       if (@game)
+        res = sprintf("##[LEAVE][%s]\n", @player.name)
         @game.monitoroff(MonitorHandler2.new(@player))
         @player.monitor_game = nil
-        @game.sente.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.sente && @game.sente.game == @game)
-        @game.gote.write_safe(sprintf("##[LEAVE][%s]\n", @player.name)) if (@game.gote && @game.gote.game == @game)
+        @game.sente.write_safe(res) if (@game.sente && @game.sente.game == @game)
+        @game.gote.write_safe(res) if (@game.gote && @game.gote.game == @game)
         @game.each_monitor { |monitor_handler|
-          monitor_handler.player.write_safe(sprintf("##[LEAVE][%s]\n", @player.name))
+          monitor_handler.player.write_safe(res)
         }
       end
       return :continue
@@ -667,6 +670,10 @@ module ShogiServer
       if ((@player.status == "connected") || (@player.status == "game_waiting"))
         @player.status = "connected"
         @player.game_name = ""
+        res = sprintf("##[GAME][%s]\n", @player.name)
+        $league.players.each do |name, p|
+          p.write_safe(res)
+        end
       else
         @player.write_safe(sprintf("##[ERROR] you are in %s status. GAME is valid in connected or game_waiting status\n", @player.status))
       end
@@ -788,6 +795,10 @@ module ShogiServer
             @player.sente = false
           else
             @player.sente = nil
+          end
+          res = sprintf("##[GAME]%s,%s\n", @game_name, @my_sente_str)
+          $league.players.each do |name, p|
+            p.write_safe(res)
           end
         else                # seek
           @player.write_safe("##[DECLINE]Error: Opponent's game rule is changed.\n")
