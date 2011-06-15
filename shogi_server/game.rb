@@ -90,6 +90,7 @@ class Game
 
     propose
     @kifu.save
+    start
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn, :sente_mouse_out, :gote_mouse_out
