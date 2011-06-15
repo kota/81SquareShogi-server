@@ -382,8 +382,9 @@ class Game
 
   def start
     log_message(sprintf("game started %s", @game_id))
-    res = sprintf("##[START]%s,%d,%s,%s,%d,%s\n", @sente.name, @sente.rate, @sente.provisional?,
-                                                  @gote.name, @gote.rate, @gote.provisional?)
+    res = sprintf("##[START]%s,%d,%d,%d,%d,%s,%s,%d,%d\n", @game_id, @sente.country_code, @gote.country_code,
+                                                               @sente.rate, @gote.rate, @sente.provisional?, @gote.provisional?,
+                                                               @sente.exp34, @gote.exp34)
     $league.players.each do |name, p|
       p.write_safe(res)
     end
