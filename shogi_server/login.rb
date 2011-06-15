@@ -191,8 +191,7 @@ class Loginx1 < Login
   def process
     super
     @player.write_safe(sprintf("##[LOGIN] +OK %s\n", PROTOCOL))
-    res = sprintf("##[LOBBY_IN]%s,%d,%s,%d,%d,%d,%d,%d,%d\n", @player.name, @player.rate, @player.provisional?, @player.country_code,
-                                                        @player.wins, @player.losses, @player.streak, @player.streak_best, @player.exp34)
+    res = sprintf("##[LOBBY_IN]" + @player.to_s_min + "\n")
     $league.players.each do |name, p|
       p.write_safe(res)
     end

@@ -331,6 +331,12 @@ class Player < BasicPlayer
                    @idle)
   end
 
+  def to_s_min
+    return sprintf("%s,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+                  name, rate, provisional?, country_code, wins, losses, streak, streak_best,
+                  exp34, wins34, losses34, draws34)
+  end
+
   def country_code
     respond_to?(:country) ? country.code : 0
   end
