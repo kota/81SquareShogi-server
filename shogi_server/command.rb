@@ -452,7 +452,7 @@ module ShogiServer
 
     def call
       if (@game)
-        res = sprintf("##[ENTER][%s]%d,%d,%d\n", @player.name, @player.country_code, @player.rate, @player.exp34)
+        res = sprintf("##[ENTER]%s\n", @player.to_s_enter)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
         @player.monitor_game = @game

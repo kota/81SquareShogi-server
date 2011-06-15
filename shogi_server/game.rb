@@ -179,14 +179,14 @@ class Game
       killer.sente = true
       killer.opponent = @gote
       @gote.opponent = killer
-      @gote.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@gote.game == self)
+      @gote.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter)) if (@gote.game == self)
     elsif (killer == @gote && @gote.game != self)
       killer.mytime = @gote.mytime
       @gote = killer
       killer.sente = false
       killer.opponent = @sente
       @sente.opponent = killer
-      @sente.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@sente.game == self)
+      @sente.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter)) if (@sente.game == self)
     else
       return false
     end
@@ -203,7 +203,7 @@ class Game
       killer.status = "post_game"
     end
     each_monitor { |monitor_handler|
-      monitor_handler.player.write_safe(sprintf("##[ENTER][%s]\n", killer.name))
+      monitor_handler.player.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter))
     }
     return true
   end

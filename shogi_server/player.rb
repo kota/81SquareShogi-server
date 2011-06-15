@@ -337,6 +337,10 @@ class Player < BasicPlayer
                   exp34, wins34, losses34, draws34)
   end
 
+  def to_s_enter
+    return sprintf("%s,%d,%d,%s,%d", name, country_code, rate, provisional?, exp34)
+  end
+
   def country_code
     respond_to?(:country) ? country.code : 0
   end
