@@ -102,6 +102,7 @@ class BasicPlayer < ActiveResource::Base
   def set_password(str)
     if str && !str.empty?
       @password = str.strip
+      self.auth_token = @password
       @player_id = @name
     else
       @player_id = @password = nil
