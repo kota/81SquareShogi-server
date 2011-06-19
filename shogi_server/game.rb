@@ -91,8 +91,12 @@ class Game
     @opening = "*"
 
     propose
-    @kifu.save
-    start
+    begin
+      @kifu.save
+    rescue
+    ensure
+      start
+    end
   end
   attr_accessor :game_name, :total_time, :byoyomi, :sente, :gote, :game_id, :board, :current_player, :next_player, :fh, :monitors
   attr_accessor :last_move, :current_turn, :sente_mouse_out, :gote_mouse_out
@@ -219,43 +223,53 @@ class Game
   end
 
   def finish
-    log_message(sprintf("game finished %s", @game_id))
+    begin
+      log_message(sprintf("game finished %s", @game_id))
 
-    # In a case where a player in agree_waiting or start_waiting status is
-    # rejected, a GameResult object is not yet instanciated.
-    # See test/TC_before_agree.rb.
-    end_time = @result ? @result.end_time : Time.now
-    @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
-    @kifu.save
+      # In a case where a player in agree_waiting or start_waiting status is
+      # rejected, a GameResult object is not yet instanciated.
+      # See test/TC_before_agree.rb.
+      end_time = @result ? @result.end_time : Time.now
+      @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
+      @kifu.save
 
-    if (@result)
-      if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
-        @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
-        @result.winner.update_count(true)
-        @result.loser.update_count(false)
-      elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
-        if (@result.kind_of?(GameResultDraw))
-          @sente.update_count34(0)
-          @gote.update_count34(0)
-        else
-          @result.winner.update_count34(1)
-          @result.loser.update_count34(-1)
+      if (@result)
+        if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
+          @sente.reload
+          @gote.reload
+          @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
+          @result.winner.update_count(true)
+          @result.loser.update_count(false)
+        elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
+          @sente.reload
+          @gote.reload
+          if (@result.kind_of?(GameResultDraw))
+            @sente.update_count34(0)
+            @gote.update_count34(0)
+          else
+            @result.winner.update_count34(1)
+            @result.loser.update_count34(-1)
+          end
         end
       end
-    end
+    rescue
+      log_error("Could not save results in %s" % [@game_id])
+      @sente.write_safe("##[ERROR] Connection to database server failed. Results were not saved.\n")
+      @gote.write_safe("##[ERROR] Connection to database server failed. Results were not saved.\n")
+    ensure
+      @sente.status = "post_game" if @sente.status = "game"
+      @gote.status = "post_game" if @gote.status = "game"
 
-    @sente.status = "post_game" if @sente.status = "game"
-    @gote.status = "post_game" if @gote.status = "game"
-
-    if (@current_player.protocol == LoginCSA::PROTOCOL)
-      @current_player.finish
+      if (@current_player.protocol == LoginCSA::PROTOCOL)
+        @current_player.finish
+      end
+      if (@next_player.protocol == LoginCSA::PROTOCOL)
+        @next_player.finish
+      end
+      @current_player = nil
+      @next_player = nil
+      @status = "finished"
     end
-    if (@next_player.protocol == LoginCSA::PROTOCOL)
-      @next_player.finish
-    end
-    @current_player = nil
-    @next_player = nil
-    @status = "finished"
   end
   
   def close
