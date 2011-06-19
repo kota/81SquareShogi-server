@@ -17,15 +17,11 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-require 'shogi_server/command'
-require 'rubygems'
-require 'active_resource'
+require 'shogi_server/base_activeresource'
 
 module ShogiServer # for a namespace
 
-class BasicPlayer < ActiveResource::Base
-  self.site = RAILS_SITE
-  self.prefix = '/api/'
+class BasicPlayer < ShogiServer::BaseActiveResource 
 
   # Idetifier of the player in the rating system
   attr_accessor :player_id
@@ -102,6 +98,7 @@ class BasicPlayer < ActiveResource::Base
   def set_password(str)
     if str && !str.empty?
       @password = str.strip
+      self.auth_token = @password
       @player_id = @name
     else
       @player_id = @password = nil

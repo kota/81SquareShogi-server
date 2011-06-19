@@ -1,12 +1,8 @@
-require 'shogi_server/command'
-require 'rubygems'
-require 'active_resource'
+require 'shogi_server/base_activeresource'
 
 module ShogiServer # for a namespace
 
-class Server < ActiveResource::Base
-  self.site = RAILS_SITE
-  self.prefix = '/api/'
+class Server < ShogiServer::BaseActiveResource 
   
   def start_log
     self.started_at = Time.now

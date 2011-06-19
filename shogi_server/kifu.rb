@@ -1,12 +1,8 @@
-require 'shogi_server/command'
-require 'rubygems'
-require 'active_resource'
+require 'shogi_server/base_activeresource'
 
 module ShogiServer # for a namespace
 
-class Kifu < ActiveResource::Base
-  self.site = RAILS_SITE
-  self.prefix = '/api/'
+class Kifu < ShogiServer::BaseActiveResource 
 end # class
 
 end # ShogiServer

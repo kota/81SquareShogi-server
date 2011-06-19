@@ -2,3 +2,4 @@ log/
 players.yaml
 *.log
 *.pid
+shogi_server/activeresource_config.rb
