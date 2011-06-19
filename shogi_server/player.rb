@@ -105,6 +105,11 @@ class BasicPlayer < ShogiServer::BaseActiveResource
     end
   end
 
+  def reload_before_save
+    reload
+    self.auth_token = @password
+  end
+
   def update_rate(loser, c, opening)
     diff = rate - loser.rate
     diff = 32*(0.5 - 1.4217e-3*diff + 2.4336e-7*diff*diff.abs + 2.514e-9*diff*diff.abs**2 - 1.991e-12*diff*diff.abs**3)
@@ -454,7 +459,7 @@ class Player < BasicPlayer
   end
 
   def banned?
-    ($banned.include?(@socket.peeraddr[2]) || $banned.include?(name.downcase))
+    ($banned.include?(@socket.peeraddr[3]) || $banned.include?(name.downcase))
   end
 
   def is_admin?

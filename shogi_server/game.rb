@@ -235,14 +235,14 @@ class Game
 
       if (@result)
         if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
-          @sente.reload
-          @gote.reload
+          @sente.reload_before_save
+          @gote.reload_before_save
           @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
           @result.winner.update_count(true)
           @result.loser.update_count(false)
         elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
-          @sente.reload
-          @gote.reload
+          @sente.reload_before_save
+          @gote.reload_before_save
           if (@result.kind_of?(GameResultDraw))
             @sente.update_count34(0)
             @gote.update_count34(0)
