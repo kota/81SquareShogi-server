@@ -670,6 +670,7 @@ module ShogiServer
       if ((@player.status == "connected") || (@player.status == "game_waiting"))
         @player.status = "connected"
         @player.game_name = ""
+        @player.game_comment = "*"
         res = sprintf("##[GAME][%s]\n", @player.name)
         $league.players.each do |name, p|
           p.write_safe(res)
@@ -693,6 +694,12 @@ module ShogiServer
     end
 
     def call
+      if (@game_name =~ /,/)
+        comment = @game_name.split(",")[1]
+        @game_name = @game_name.split(",")[0]
+      else
+        comment = "*"
+      end
       if (! Login::good_game_name?(@game_name))
         @player.write_safe(sprintf("##[ERROR] bad game name\n"))
         return :continue
@@ -730,10 +737,9 @@ module ShogiServer
           return :continue
         end
       end
-
+      @player.game_name = @game_name
+      @player.game_comment = comment
       if (rival)
-        @player.game_name = @game_name
-        
         if ((@my_sente_str == "*") && (rival.sente == nil))
           if (rand(2) == 0)
             @player.sente = true
@@ -788,7 +794,6 @@ module ShogiServer
       else # rival not found
         if (@command_name == "GAME")
           @player.status = "game_waiting"
-          @player.game_name = @game_name
           if (@my_sente_str == "+")
             @player.sente = true
           elsif (@my_sente_str == "-")
@@ -796,7 +801,7 @@ module ShogiServer
           else
             @player.sente = nil
           end
-          res = sprintf("##[GAME]%s,%s\n", @game_name, @my_sente_str)
+          res = sprintf("##[GAME]%s,%s,%s\n", @game_name, @my_sente_str, comment)
           $league.players.each do |name, p|
             p.write_safe(res)
           end

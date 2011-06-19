@@ -147,6 +147,7 @@ class Player < BasicPlayer
     @socket = socket
     @status = "connected"       # game_waiting -> agree_waiting -> start_waiting -> game -> finished
     @idle = false
+    @game_comment = "*"
 
     @protocol = nil             # CSA or x1
     @eol = eol || "\m"          # favorite eol code
@@ -160,7 +161,7 @@ class Player < BasicPlayer
     start_write_thread
   end
 
-  attr_accessor :socket, :status, :idle
+  attr_accessor :socket, :status, :idle, :game_comment
   attr_accessor :protocol, :eol, :game, :mytime, :monitor_game
   attr_accessor :main_thread
   attr_reader :socket_buffer
@@ -314,7 +315,7 @@ class Player < BasicPlayer
   end
 
   def to_s34
-    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %s", 
+    return sprintf("%s %s %s %s %s %d %d %s %s %d %d %d %d %s %s", 
                    name,
                    @protocol,
                    @status,
@@ -328,7 +329,8 @@ class Player < BasicPlayer
                    wins34,
                    losses34,
                    draws34,
-                   @idle)
+                   @idle,
+                   @game_comment)
   end
 
   def to_s_min

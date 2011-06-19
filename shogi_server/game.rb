@@ -63,6 +63,8 @@ class Game
 
     @sente.status = "agree_waiting"
     @gote.status  = "agree_waiting"
+    @sente.game_comment = "*"
+    @gote.game_comment = "*"
 
     @game_id = sprintf("%s+%s+%s+%s+%s", 
                   $league.event, @game_name, 
