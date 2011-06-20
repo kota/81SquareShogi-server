@@ -160,7 +160,7 @@ class Player < BasicPlayer
     @main_thread = Thread::current
     @write_queue = ShogiServer::TimeoutQueue.new(WRITE_THREAD_WATCH_INTERVAL)
     @player_logger = nil
-    @name = name
+    @name = str.split[1]
     start_write_thread
   end
 
@@ -460,11 +460,11 @@ class Player < BasicPlayer
   end
 
   def banned?
-    ($banned.include?(@socket.peeraddr[3]) || $banned.include?(name.downcase))
+    ($banned.include?(@socket.peeraddr[3]) || $banned.include?(@name.downcase))
   end
 
   def is_admin?
-    if (["kota","hidetchi","test1","test2","test3"].include?(name.downcase))
+    if (["kota","hidetchi","test1","test2","test3"].include?(@name.downcase))
       true
     else
       false
