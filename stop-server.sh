@@ -1,3 +1,3 @@
 #!/bin/sh
 
-kill `cat shogi-server.pid`
+kill -9 `cat shogi-server.pid`

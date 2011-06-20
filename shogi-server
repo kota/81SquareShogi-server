@@ -369,7 +369,7 @@ def main
       Dependencies.clear
     end
   end
-  $stderr.puts("server started as a deamon [Revision: #{ShogiServer::Revision}]") if $options["daemon"] 
+  $stderr.puts("server started as a deamon [Revision: #{ShogiServer::Revision}] [port: #{port}] [league: #{$league.event}]") if $options["daemon"] 
   log_message("server started [Revision: #{ShogiServer::Revision}]")
 
   server.start do |client|
