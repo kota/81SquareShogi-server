@@ -76,7 +76,7 @@ module ShogiServer
         cmd = CloseCommand.new(str, player)
       when /^%%GAME\s*$/
         cmd = GameCommand.new(str, player)
-      when /^%%(GAME|SEEK)\s+(\S+)\s+([\+\-\*])\s*$/
+      when /^%%(GAME|SEEK)\s+(.+)\s+([\+\-\*])\s*$/
         command_name = $1
         game_name = $2
         my_sente_str = $3
@@ -693,8 +693,8 @@ module ShogiServer
 
     def call
       if (@game_name =~ /,/)
-        comment = @game_name.split(",")[1]
-        @game_name = @game_name.split(",")[0]
+        comment = @game_name.split(",", 2)[1]
+        @game_name = @game_name.split(",", 2)[0]
       else
         comment = "*"
       end
