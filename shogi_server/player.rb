@@ -107,6 +107,7 @@ class BasicPlayer < ShogiServer::BaseActiveResource
 
   def reload_before_save
     reload
+    self.name = @name
     self.auth_token = @password
   end
 
