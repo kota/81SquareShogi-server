@@ -160,7 +160,7 @@ class Player < BasicPlayer
     @main_thread = Thread::current
     @write_queue = ShogiServer::TimeoutQueue.new(WRITE_THREAD_WATCH_INTERVAL)
     @player_logger = nil
-    @name = login
+    @name = name
     start_write_thread
   end
 
