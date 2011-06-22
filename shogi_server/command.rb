@@ -53,9 +53,6 @@ module ShogiServer
         cmd = Who34Command.new(str, player, $league.players)
       when /^%%WHO/
         cmd = WhoCommand.new(str, player, $league.players)
-      when /^%%%WATCHERS34\s+(\S+)/
-        game_id = $1
-        cmd = Watchers34Command.new(str, player, $league.games[game_id])
       when /^%%%WATCHERS\s+(\S+)/
         game_id = $1
         cmd = WatchersCommand.new(str, player, $league.games[game_id])
@@ -450,7 +447,7 @@ module ShogiServer
 
     def call
       if (@game)
-        res = sprintf("##[ENTER]%s\n", @player.to_s_enter)
+        res = sprintf("##[ENTER][%s]\n", @player.name)
         monitor_handler = MonitorHandler2.new(@player)
         @game.monitoron(monitor_handler)
         @player.monitor_game = @game
@@ -540,35 +537,11 @@ module ShogiServer
       if (@game)
         watchers = ""
         @game.each_monitor{ |monitor_handler|
-          watchers += sprintf("##[WATCHERS] %s %s %d\n", monitor_handler.player.name,
-                                                         monitor_handler.player.rate,
-                                                         monitor_handler.player.country_code)
+          watchers += sprintf("##[WATCHERS] %s\n", monitor_handler.player.name)
         }
         @player.write_safe(watchers)
       end
       @player.write_safe("##[WATCHERS] +OK\n")
-      return :continue
-    end
-  end
-
-  # Command of Watchers34. Extended functionality for 81DOJO_3BY4.
-  #
-  class Watchers34Command < BaseCommandForGame
-    def initialize(str, player, game)
-      super
-    end
-
-    def call
-      if (@game)
-        watchers = ""
-        @game.each_monitor{ |monitor_handler|
-          watchers += sprintf("##[WATCHERS34] %s %s %d\n", monitor_handler.player.name,
-                                                         monitor_handler.player.exp34,
-                                                         monitor_handler.player.country_code)
-        }
-        @player.write_safe(watchers)
-      end
-      @player.write_safe("##[WATCHERS34] +OK\n")
       return :continue
     end
   end
@@ -633,9 +606,10 @@ module ShogiServer
 
     def call
       if (@player.provisional?)
+        @player.reload_before_save
         @player.rate = @new_rate
         @player.save
-        @player.write_safe("##[SETRATE] +OK\n")
+        @player.write_safe(sprintf("##[SETRATE]%d\n", @new_rate))
       else
         @player.write_safe("##[ERROR] Your rate is not provisional.\n")
       end
@@ -1043,7 +1017,7 @@ module ShogiServer
       elsif (@sendto && @sendto.status == "game_waiting" && !@sendto.opponent)
         @player.opponent = @sendto
         @sendto.opponent = @player
-        @sendto.write_safe("##[CHALLENGE]%s,%d,%d,%s,%d\n" % [@player.name, @player.country_code, @player.rate, @player.privisional? ? "*" : "", @player.exp34])
+        @sendto.write_safe("##[CHALLENGE][%s]\n" % [@player.name])
       else
         @player.write_safe("##[DECLINE]Opponent not in challengeable status.\n")
       end

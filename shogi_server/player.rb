@@ -112,23 +112,26 @@ class BasicPlayer < ShogiServer::BaseActiveResource
   end
 
   def update_rate(loser, c, opening)
-    diff = rate - loser.rate
-    diff = 32*(0.5 - 1.4217e-3*diff + 2.4336e-7*diff*diff.abs + 2.514e-9*diff*diff.abs**2 - 1.991e-12*diff*diff.abs**3)
-    diff = ([[1,diff].max,31].min * c).round
+    rate0 = rate
+    loser_rate0 = loser.rate
+    diff = rate0 - loser_rate0
+    diff = (32 - 16*(1 + Math.erf(diff / Math.sqrt(2) / 285)))*c
     self.rate = self.rate + diff
-    @attributes['max_rate'] = self.rate if (self.rate > max_rate)
+    @attributes['max_rate'] = self.rate #if (self.rate > max_rate)
     save
     if (!provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate,:sente => @sente,:opening => opening})
+      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate.to_i,:sente => @sente,:opening => opening})
       @rate_change.save
     end
-    diff = (0.5 * diff).round if (provisional? && !loser.provisional?)
+    diff = 0.5 * diff if (provisional? && !loser.provisional?)
     loser.rate = loser.rate - diff
     loser.save
     if (!loser.provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate,:sente => !@sente,:opening => opening})
+      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate.to_i,:sente => !@sente,:opening => opening})
       @rate_change.save
     end
+    write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", rate0, self.rate, loser_rate0, loser.rate))
+    loser.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", loser_rate0, loser.rate, rate0, self.rate))
   end
 
 end
@@ -213,7 +216,7 @@ class Player < BasicPlayer
   def kill
     log_message(sprintf("user %s killed", @name))
     if (!@game && !@monitor_game)
-      res = sprintf("##[LOBBY_OUT]%s\n", name)
+      res = sprintf("##[LOBBY_OUT][%s]\n", name)
       $league.players.each do |name, p|
         p.write_safe(res)
       end
@@ -340,10 +343,6 @@ class Player < BasicPlayer
     return sprintf("%s,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d",
                   name, rate, provisional?, country_code, wins, losses, streak, streak_best,
                   exp34, wins34, losses34, draws34)
-  end
-
-  def to_s_enter
-    return sprintf("%s,%d,%d,%s,%d", name, country_code, rate, provisional?, exp34)
   end
 
   def country_code

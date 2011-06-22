@@ -148,10 +148,10 @@ class GameResult
                                         @white.name, white_result,
                                         @game.current_turn,
                                         @game.opening,
-                                        (@black.provisional? ? '*' : '') + @black.rate.to_s,
+                                        (@black.provisional? ? '*' : '') + @black.rate.to_i.to_s,
                                         @black.country_code,
                                         @game.sente_mouse_out,
-                                        (@white.provisional? ? '*' : '') + @white.rate.to_s,
+                                        (@white.provisional? ? '*' : '') + @white.rate.to_i.to_s,
                                         @white.country_code,
                                         @game.gote_mouse_out])
   end

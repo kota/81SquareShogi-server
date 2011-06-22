@@ -82,7 +82,7 @@ class Game
 
     $league.games[@game_id] = self
 
-    log_message(sprintf("game created %s", @game_id))
+    #log_message(sprintf("game created %s", @game_id))
 
     @start_time = nil
     @kifu = Kifu.new({:blackid => @sente.id,:whiteid => @gote.id,:contents => ""})
@@ -185,14 +185,14 @@ class Game
       killer.sente = true
       killer.opponent = @gote
       @gote.opponent = killer
-      @gote.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter)) if (@gote.game == self)
+      @gote.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@gote.game == self)
     elsif (killer == @gote && @gote.game != self)
       killer.mytime = @gote.mytime
       @gote = killer
       killer.sente = false
       killer.opponent = @sente
       @sente.opponent = killer
-      @sente.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter)) if (@sente.game == self)
+      @sente.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@sente.game == self)
     else
       return false
     end
@@ -209,7 +209,7 @@ class Game
       killer.status = "post_game"
     end
     each_monitor { |monitor_handler|
-      monitor_handler.player.write_safe(sprintf("##[ENTER]%s\n", killer.to_s_enter))
+      monitor_handler.player.write_safe(sprintf("##[ENTER][%s]\n", killer.name))
     }
     return true
   end
@@ -234,12 +234,17 @@ class Game
       @kifu.save
 
       if (@result)
-        if (@game_name =~ /^r_/ && @current_turn > 3 && !@result.kind_of?(GameResultDraw))
-          @sente.reload_before_save
-          @gote.reload_before_save
-          @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
-          @result.winner.update_count(true)
-          @result.loser.update_count(false)
+        if (@game_name =~ /^r_/)
+          if (@current_turn > 3 && !@result.kind_of?(GameResultDraw))
+            @sente.reload_before_save
+            @gote.reload_before_save
+            @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
+            @result.winner.update_count(true)
+            @result.loser.update_count(false)
+          else
+            @sente.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n",@sente.rate,@sente.rate,@gote.rate,@gote.rate))
+            @gote.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n",@gote.rate,@gote.rate,@sente.rate,@sente.rate))
+          end
         elsif (@game_name =~ /^vazoo_/ && @current_turn > 2)
           @sente.reload_before_save
           @gote.reload_before_save
@@ -273,7 +278,7 @@ class Game
   end
   
   def close
-    log_message(sprintf("game closed %s", @game_id))
+    #log_message(sprintf("game closed %s", @game_id))
     @sente = nil
     @gote = nil
     $league.games.delete(@game_id)
@@ -398,9 +403,7 @@ class Game
 
   def start
     log_message(sprintf("game started %s", @game_id))
-    res = sprintf("##[START]%s,%d,%d,%d,%d,%s,%s,%d,%d\n", @game_id, @sente.country_code, @gote.country_code,
-                                                               @sente.rate, @gote.rate, @sente.provisional?, @gote.provisional?,
-                                                               @sente.exp34, @gote.exp34)
+    res = sprintf("##[START][%s]\n", @game_id)
     $league.players.each do |name, p|
       p.write_safe(res)
     end
@@ -423,8 +426,8 @@ class Game
     @kifu.contents += "To_Move:#{@board.teban ? '+' : '-'}\n"
     @kifu.contents += "$EVENT:#{@game_id}\n"
 
-    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate},#{@sente.country_code},#{@sente.exp34}\n"
-    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate},#{@gote.country_code},#{@gote.exp34}\n"
+    @kifu.contents += "I+#{@sente.provisional? ? '*' : ''}#{@sente.rate.to_i},#{@sente.country_code},#{@sente.exp34}\n"
+    @kifu.contents += "I-#{@gote.provisional? ? '*' : ''}#{@gote.rate.to_i},#{@gote.country_code},#{@gote.exp34}\n"
 
     @sente.write_safe(propose_message("+"))
     @gote.write_safe(propose_message("-"))
