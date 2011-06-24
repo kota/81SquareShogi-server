@@ -114,7 +114,7 @@ class Game
   end
 
   def monitoron(monitor_handler)
-    monitoroff(monitor_handler)
+    @monitors.delete_if {|mon| mon == monitor_handler}
     @monitors.push(monitor_handler)
   end
 
@@ -454,6 +454,35 @@ class Game
     end
   end
 
+  def to_s
+    return sprintf("%s %d %d %d %d %d %s %s %s %d %s",
+                   @game_id,
+                   @current_turn,
+                   @sente.provisional? ? 0 : @sente.rate,
+                   @gote.provisional? ? 0 : @gote.rate,
+                   @sente.country_code,
+                   @gote.country_code,
+                   @status == "finished" ? @result.black_result : @status,
+                   @sente.game == self,
+                   @gote.game == self,
+                   @monitors.length,
+                   @opening)
+  end
+
+  def to_s34
+    return sprintf("%s %d %d %d %d %d %s %s %s %d",
+                   @game_id,
+                   @current_turn,
+                   @sente.exp34,
+                   @gote.exp34,
+                   @sente.country_code,
+                   @gote.country_code,
+                   @status == "finished" ? @result.black_result : @status,
+                   @sente.game == self,
+                   @gote.game == self,
+                   @monitors.length)
+  end
+
   def show()
     str0 = <<EOM
 BEGIN Game_Summary
@@ -522,14 +551,6 @@ EOM
     return false
   end
   
-  def update_auth_token(player)
-    if (@sente.name.downcase == player.name.downcase)
-      @sente.auth_token = player.auth_token
-    elsif (@gote.name.downcase == player.name.downcase)
-      @gote.auth_token = player.auth_token
-    end
-  end
-  
   private
   
   def issue_current_time
@@ -539,6 +560,92 @@ EOM
         time += 1
       end
       @@time = time
+    end
+  end
+end
+
+
+class StudyGame < Game
+
+  def initialize(game_name, sente_name, gote_name, board, moves)
+    @monitors = Array::new # array of MonitorHandler*
+    @game_name = game_name
+    if (@game_name =~ /-(\d+)-(\d+)$/)
+      @total_time = $1.to_i
+      @byoyomi = $2.to_i + 10
+    end
+
+    @sente = DummyPlayer.new({:id => 0, :name => sente_name, :wins => 0, :losses => 0, :rate => 0, :exp34 => 0})
+    @sente.country_code = 0
+    @sente.sente = true
+    @gote = DummyPlayer.new({:id => -1, :name => gote_name, :wins => 0, :losses => 0, :rate => 0, :exp34 => 0})
+    @gote.country_code = 0
+    @gote.sente = false
+    @board = board
+    @moves = moves
+    if @board.teban
+      @current_player, @next_player = @sente, @gote
+    else
+      @current_player, @next_player = @gote, @sente
+    end
+
+    @sente.opponent = @gote
+    @gote.opponent = @sente
+
+    @last_move = @board.initial_moves.empty? ? "" : "%s,T1" % [@board.initial_moves.last]
+    @current_turn = @board.initial_moves.size
+
+    @game_id = sprintf("STUDY+%s+%s+%s+%s", @game_name, @sente.name, @gote.name, issue_current_time)
+
+    $league.games[@game_id] = self
+
+    @start_time = nil
+    @kifu = Kifu.new({:id => 0, :contents => ""})
+    @result = nil
+    @status = "created"
+    @opening = "*"
+
+    propose
+    start
+  end
+
+  def finish
+    log_message(sprintf("study game created %s", @game_id))
+
+    end_time = @result ? @result.end_time : Time.now
+    @kifu.contents += "'$END_TIME:#{end_time.strftime("%Y/%m/%d %H:%M:%S")}\n"
+
+    @sente.status = "post_game" if @sente.status = "game"
+    @gote.status = "post_game" if @gote.status = "game"
+
+    @current_player = nil
+    @next_player = nil
+    @status = "finished"
+  end
+
+  def start
+    @sente.status = "game"
+    @gote.status  = "game"
+    @sente.mytime = @total_time
+    @gote.mytime = @total_time
+    @start_time = Time::new
+    @end_time = @start_time
+    @status = "game"
+    @board.update_sennichite(@next_player)
+    
+    unless (@moves.size == 0)
+      @moves.each do |move|
+        handle_one_move(move, @current_player, Time.now)
+      end
+    end
+    
+    @result = GameResultSuspend.new(self, @current_player, @next_player)
+    @result.process
+    finish()
+
+    res = sprintf("##[START][%s]\n", @game_id)
+    $league.players.each do |name, p|
+      p.write_safe(res)
     end
   end
 end

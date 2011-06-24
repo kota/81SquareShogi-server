@@ -395,4 +395,26 @@ class GameResultDisconnectDraw < GameResultDraw
   end
 end
 
+class GameResultSuspend < GameResult
+  def initialize(game, p1, p2)
+    super
+    @log_summary_type = "suspend"
+    @result_type      = "#SUSPEND"
+  end
+
+  def black_result
+    return "suspend"
+  end
+
+  def white_result
+    return "suspend"
+  end
+
+  def process
+    log(@result_type)
+    log_summary
+    notify
+  end
+end
+
 end # ShogiServer

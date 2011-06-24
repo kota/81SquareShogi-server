@@ -77,8 +77,13 @@ module ShogiServer
         command_name = $1
         game_name = $2
         my_sente_str = $3
-        cmd = GameSeekCommand.new(str, player, 
-                                  command_name, game_name, my_sente_str)
+        cmd = GameSeekCommand.new(str, player, command_name, game_name, my_sente_str)
+      when /^%%%STUDY\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/
+        game_type = $1
+        sente_name = $2
+        gote_name = $3
+        moves = $4
+        cmd = StudyGameCommand.new(str, player, game_type, sente_name, gote_name, moves)
       when /^%%MONITORON\s+(\S+)/
         game_id = $1
         cmd = MonitorOnCommand.new(str, player, $league.games[game_id])
@@ -788,6 +793,32 @@ module ShogiServer
     end
   end
 
+  # Command of STUDY
+  #
+  class StudyGameCommand < Command
+    def initialize(str, player, game_type, sente_name, gote_name, moves)
+      super(str, player)
+      @game_name = game_type + "_" + player.name + "-900-60"
+      @sente_name = sente_name
+      @gote_name = gote_name
+      if (moves == "*")
+        @moves = []
+      else
+        @moves = moves.split("/")
+      end
+    end
+
+    def call
+      if ((@player.status == "connected") && !@player.monitor_game)
+        klass = Login.handicapped_game_name?(@game_name) || Board
+        board = klass.new
+        board.initial
+        StudyGame.new(@game_name, @sente_name, @gote_name, board, @moves)
+      end
+      return :continue
+    end
+  end
+
   # Command of CHAT
   #
   class ChatCommand < Command
@@ -887,19 +918,8 @@ module ShogiServer
 
     def call
       buf = Array::new
-      @games.each do |id, game|
-        buf.push(sprintf("##[LIST] %s %d %d %d %d %d %s %s %s %d %s\n",
-                         id,
-                         game.current_turn,
-                         game.sente.provisional? ? 0 : game.sente.rate,
-                         game.gote.provisional? ? 0 : game.gote.rate,
-                         game.sente.country_code,
-                         game.gote.country_code,
-                         game.status == "finished" ? game.result.black_result : game.status,
-                         game.sente.game == game,
-                         game.gote.game == game,
-                         game.monitors.length,
-                         game.opening))
+      @games.each do |id, g|
+        buf.push(sprintf("##[LIST] %s\n", g.to_s))
       end
       buf.push("##[LIST] +OK\n")
       @player.write_safe(buf.join)
@@ -920,18 +940,8 @@ module ShogiServer
 
     def call
       buf = Array::new
-      @games.each do |id, game|
-        buf.push(sprintf("##[LIST34] %s %d %d %d %d %d %s %s %s %d\n",
-                         id,
-                         game.current_turn,
-                         game.sente.exp34,
-                         game.gote.exp34,
-                         game.sente.country_code,
-                         game.gote.country_code,
-                         game.status == "finished" ? game.result.black_result : game.status,
-                         game.sente.game == game,
-                         game.gote.game == game,
-                         game.monitors.length))
+      @games.each do |id, g|
+        buf.push(sprintf("##[LIST34] %s\n", g.to_s34))
       end
       buf.push("##[LIST34] +OK\n")
       @player.write_safe(buf.join)

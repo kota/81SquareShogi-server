@@ -472,4 +472,10 @@ class Player < BasicPlayer
 
 end # class
 
+class DummyPlayer < Player
+  def write_safe(str)
+    return :continue
+  end
+end
+
 end # ShogiServer
