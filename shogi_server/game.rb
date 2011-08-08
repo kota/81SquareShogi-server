@@ -179,6 +179,10 @@ class Game
   end
 
   def reconnect(killer)
+    if (killer.opponent && killer.opponent.opponent == killer)
+      killer.opponent.opponent = nil if ["connected", "game_waiting"].include?(killer.opponent.status)
+      killer.opponent.write_safe("##[DECLINE]Opponent canceled challenge.\n")
+    end
     if (killer == @sente && @sente.game != self)
       killer.mytime = @sente.mytime
       killer.sente = true

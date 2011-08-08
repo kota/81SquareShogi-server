@@ -961,6 +961,7 @@ module ShogiServer
     end
 
     def call
+      @player.opponent = nil if (@player.opponent && ["connected", "game_waiting"].include?(@player.status) && !$league.find(@player.opponent.name))
       buf = Array::new
       @players.each do |name, p|
         buf.push(sprintf("##[WHO] %s\n", p.to_s))
@@ -983,6 +984,7 @@ module ShogiServer
     end
 
     def call
+      @player.opponent = nil if (@player.opponent && ["connected", "game_waiting"].include?(@player.status) && !$league.find(@player.opponent.name))
       buf = Array::new
       @players.each do |name, p|
         buf.push(sprintf("##[WHO34] %s\n", p.to_s34))
