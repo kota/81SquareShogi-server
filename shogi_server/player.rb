@@ -111,27 +111,10 @@ class BasicPlayer < ShogiServer::BaseActiveResource
     self.auth_token = @password
   end
 
-  def update_rate(loser, c, opening)
-    rate0 = rate
-    loser_rate0 = loser.rate
-    diff = rate0 - loser_rate0
-    diff = (32 - 16*(1 + Math.erf(diff / Math.sqrt(2) / 285)))*c
+  def update_rate(diff)
     self.rate = self.rate + diff
-    @attributes['max_rate'] = self.rate #if (self.rate > max_rate)
+    @attributes['max_rate'] = self.rate.to_i if (self.rate.to_i > max_rate)
     save
-    if (!provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => self.id,:change => self.rate.to_i,:sente => @sente,:opening => opening})
-      @rate_change.save
-    end
-    diff = 0.5 * diff if (provisional? && !loser.provisional?)
-    loser.rate = loser.rate - diff
-    loser.save
-    if (!loser.provisional?)
-      @rate_change = RateChangeHistory.new({:player_id => loser.id,:change => - loser.rate.to_i,:sente => !@sente,:opening => opening})
-      @rate_change.save
-    end
-    write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", rate0, self.rate, loser_rate0, loser.rate))
-    loser.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", loser_rate0, loser.rate, rate0, self.rate))
   end
 
 end

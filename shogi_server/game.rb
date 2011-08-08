@@ -242,7 +242,23 @@ class Game
           if (@current_turn > 3 && !@result.kind_of?(GameResultDraw))
             @sente.reload_before_save
             @gote.reload_before_save
-            @result.winner.update_rate(@result.loser, [2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min, @opening)
+            winner_rate0 = @result.winner.rate
+            loser_rate0 = @result.loser.rate
+            diff = winner_rate0 - loser_rate0
+            diff = (32 - 16*(1 + Math.erf(diff / Math.sqrt(2) / 285))) * ([2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
+            @result.winner.update_rate(diff)
+            diff = 0.5 * diff if (@result.winner.provisional? && !@result.loser.provisional?)
+            @result.loser.update_rate(- diff)
+            @result.winner.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", winner_rate0, @result.winner.rate, loser_rate0, @result.loser.rate))
+            @result.loser.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", loser_rate0, @result.loser.rate, winner_rate0, @result.winner.rate))
+            if (!@result.winner.provisional?)
+              @rate_change = RateChangeHistory.new({:player_id => @result.winner.id,:change => @result.winner.rate.to_i,:sente => @result.winner.sente,:opening => @opening})
+              @rate_change.save
+            end
+            if (!@result.loser.provisional?)
+              @rate_change = RateChangeHistory.new({:player_id => @result.loser.id,:change => - @result.loser.rate.to_i,:sente => @result.loser.sente,:opening => @opening})
+              @rate_change.save
+            end
             @result.winner.update_count(true)
             @result.loser.update_count(false)
           else
