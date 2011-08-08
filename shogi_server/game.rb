@@ -181,16 +181,16 @@ class Game
   def reconnect(killer)
     if (killer == @sente && @sente.game != self)
       killer.mytime = @sente.mytime
-      @sente = killer
       killer.sente = true
       killer.opponent = @gote
+      @sente = killer
       @gote.opponent = killer
       @gote.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@gote.game == self)
     elsif (killer == @gote && @gote.game != self)
       killer.mytime = @gote.mytime
-      @gote = killer
       killer.sente = false
       killer.opponent = @sente
+      @gote = killer
       @sente.opponent = killer
       @sente.write_safe(sprintf("##[ENTER][%s]\n", killer.name)) if (@sente.game == self)
     else
