@@ -85,6 +85,8 @@ class Login
       ret = VAMINIBoard
     when %r!^va5656_!
       ret = VA5656Board
+    when %r!^va33_!
+      ret = VA33Board
     when %r!^vazoo_!
       ret = VAZOOBoard
     else

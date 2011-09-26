@@ -55,6 +55,21 @@ class VA5656Board < Board
   end
 end
 
+# Board for 3x3-shogi.
+#
+class VA33Board < Board
+  def initial
+    @gote_ou = Piece33OU::new(self, 4, 4, false)
+    @sente_ou = Piece33OU::new(self, 6, 6, true)
+    Piece33FU::new(self, 0, 0, false)
+    PieceGI::new(self, 0, 0, false)
+    Piece33FU::new(self, 0, 0, true)
+    PieceGI::new(self, 0, 0, true)
+    @teban = true
+    @gote_base_point = 0
+  end
+end
+
 # Board for Dobutsu-shogi.
 #
 class VAZOOBoard < Board
