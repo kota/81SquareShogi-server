@@ -1147,15 +1147,15 @@ module ShogiServer
     end
 
     def call
-      if (!@player.is_admin?)
-      elsif (!$banned.include?(@banned))
-        $banned.push(@banned)
-        @player.write_safe("Banned %s\n" % [@banned])
+      if (@player.is_admin?)
+        @banned.split(",").each do |p|
+          if (!$banned.include?(p))
+            $banned.push(p)
+          end
+        end
         $banned.each do |banned|
           @player.write_safe("##[BANNED] %s\n" % [banned])
         end
-      else
-        @player.write_safe("Already in list.\n")
       end
       return :continue
     end
