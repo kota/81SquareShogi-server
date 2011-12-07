@@ -261,6 +261,13 @@ class Game
             end
             @result.winner.update_count(true)
             @result.loser.update_count(false)
+            if (@sente.latest_ip_address == @gote.latest_ip_address)
+              log_cheat("SELF", true)
+            elsif (@sente_mouse_out > 0.5 * @current_turn && @sente_mouse_out >= 20)
+              log_cheat("SOFT", true)
+            elsif (@gote_mouse_out > 0.5 * @current_turn && @gote_mouse_out >= 20)
+              log_cheat("SOFT", false)
+            end
           else
             @sente.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n",@sente.rate,@sente.rate,@gote.rate,@gote.rate))
             @gote.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n",@gote.rate,@gote.rate,@sente.rate,@sente.rate))
@@ -582,6 +589,18 @@ EOM
       @@time = time
     end
   end
+
+  def log_cheat(type, sente)
+    log_message(sprintf("CHEAT-%s:%s(%s|%s),M%d/%d,%s,%s(%s)", type, 
+                                          sente ? @sente.name : @gote.name,
+                                          sente ? @sente.latest_ip_address : @gote.latest_ip_address,
+                                          sente ? @sente.rate.to_i.to_s : @gote.rate.to_i.to_s,
+                                          sente ? @sente_mouse_out : @gote_mouse_out,
+                                          @current_turn,
+                                          sente ? @result.black_result : @result.gote_result,
+                                          sente ? @gote.name : @sente.name,
+                                          sente ? @gote.rate.to_i.to_s : @sente.rate.to_i.to_s))
+  end 
 end
 
 
