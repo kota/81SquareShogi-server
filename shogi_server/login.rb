@@ -81,6 +81,8 @@ class Login
       ret = HCFU3Board
     when %r!^hcnaked_!
       ret = HCNAKEDBoard
+    when %r!^vaoa_!
+      ret = VAOABoard
     when %r!^vamini_!
       ret = VAMINIBoard
     when %r!^va5656_!
