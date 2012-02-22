@@ -238,29 +238,36 @@ class Game
       @kifu.save
 
       if (@result)
-        if (@game_name =~ /^r_/)
+        if (@game_name =~ /^r_/ && !(@result.winner.provisional? && @result.loser.provisional?))
           if (@current_turn > 3 && !@result.kind_of?(GameResultDraw))
             @sente.reload_before_save
             @gote.reload_before_save
             winner_rate0 = @result.winner.rate
             loser_rate0 = @result.loser.rate
-            diff = winner_rate0 - loser_rate0
-            diff = (32 - 16*(1 + Math.erf(diff / Math.sqrt(2) / 285))) * ([2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
-            @result.winner.update_rate(diff)
-            diff = 0.5 * diff if (@result.winner.provisional? && !@result.loser.provisional?)
-            @result.loser.update_rate(- diff)
+            diff0 = winner_rate0 - loser_rate0
+            diff = (32 - 16*(1 + Math.erf(diff0 / Math.sqrt(2) / 285))) * ([2,((@total_time/300) ** 0.8 - 1)/(9 ** 0.8 - 1) + 1].min)
+            if (@result.winner.provisional? && diff0 < 0)
+              @result.winner.update_rate(- diff0)
+              @result.loser.update_rate(- 0.25 * diff)
+            elsif (@result.loser.provisional? && diff0 < 0)
+              @result.winner.update_rate(0.25 * diff)
+              @result.loser.update_rate(diff0)
+            else
+              @result.winner.update_rate(diff)
+              @result.loser.update_rate(- diff)
+            end
             @result.winner.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", winner_rate0, @result.winner.rate, loser_rate0, @result.loser.rate))
             @result.loser.write_safe(sprintf("##[RESULT]%d,%d,%d,%d\n", loser_rate0, @result.loser.rate, winner_rate0, @result.winner.rate))
-            if (!@result.winner.provisional?)
+            @result.winner.update_count(true)
+            @result.loser.update_count(false)
+            unless (@result.winner.provisional?)
               @rate_change = RateChangeHistory.new({:player_id => @result.winner.id,:change => @result.winner.rate.to_i,:sente => @result.winner.sente,:opening => @opening})
               @rate_change.save
             end
-            if (!@result.loser.provisional?)
+            unless (@result.loser.provisional?)
               @rate_change = RateChangeHistory.new({:player_id => @result.loser.id,:change => - @result.loser.rate.to_i,:sente => @result.loser.sente,:opening => @opening})
               @rate_change.save
             end
-            @result.winner.update_count(true)
-            @result.loser.update_count(false)
             if (@sente.latest_ip_address == @gote.latest_ip_address)
               log_cheat("SELF", true)
             elsif (@sente_mouse_out > 0.5 * @current_turn && @sente_mouse_out >= 20)

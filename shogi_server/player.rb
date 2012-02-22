@@ -76,7 +76,7 @@ class BasicPlayer < ShogiServer::BaseActiveResource
   end
 
   def provisional?
-    return (wins + losses < 10)
+    return (wins + losses < 5)
   end
 
   def last_game_win?
@@ -113,7 +113,7 @@ class BasicPlayer < ShogiServer::BaseActiveResource
 
   def update_rate(diff)
     self.rate = self.rate + diff
-    @attributes['max_rate'] = self.rate.to_i if (self.rate.to_i > max_rate)
+    @attributes['max_rate'] = self.rate.to_i if (!provisional? && self.rate.to_i > max_rate)
     save
   end
 
