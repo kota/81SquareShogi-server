@@ -604,7 +604,7 @@ EOM
                                           sente ? @sente.rate.to_i.to_s : @gote.rate.to_i.to_s,
                                           sente ? @sente_mouse_out : @gote_mouse_out,
                                           @current_turn,
-                                          sente ? @result.black_result : @result.gote_result,
+                                          sente ? @result.black_result : @result.white_result,
                                           sente ? @gote.name : @sente.name,
                                           sente ? @gote.rate.to_i.to_s : @sente.rate.to_i.to_s))
   end 
