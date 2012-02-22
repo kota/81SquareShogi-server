@@ -354,7 +354,7 @@ class Game
         @last_move = sprintf("%s,T%d", str, t)
         @current_turn += 1 unless [:toryo, :kachi_win].include?(move_status)
         
-        if (@game_name =~ /^(r|nr)_/ && @opening == "*" && @current_turn >= 10 && @current_turn <= 24)
+        if (@game_name =~ /^(r|nr|hcfixed)_/ && @opening == "*" && @current_turn >= 10 && @current_turn <= 24)
           @opening = @board.opening
           @opening = "unknown" if (@opening == "*" && @current_turn == 24)
         end
